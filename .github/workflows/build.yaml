@@ -8,15 +8,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Download GmmLib 22.3.18
-      uses: robinraju/release-downloader@v1.10
-      with:
-        repository: 'intel/gmmlib'
-        tag: 'intel-gmmlib-22.3.18'
-        tarBall: true
-        zipBall: false
-        extract: true
-    
     - name: Download Libva 2.21.0
       uses: robinraju/release-downloader@v1.10
       with:
@@ -31,6 +22,15 @@ jobs:
       with:
         repository: 'intel/media-driver'
         tag: 'intel-media-24.1.5'
+        tarBall: true
+        zipBall: false
+        extract: true
+
+    - name: Download GmmLib 22.3.18
+      uses: robinraju/release-downloader@v1.10
+      with:
+        repository: 'intel/gmmlib'
+        tag: 'intel-gmmlib-22.3.18'
         tarBall: true
         zipBall: false
         extract: true
