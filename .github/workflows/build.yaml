@@ -1,6 +1,9 @@
 name: Build Intel Media Driver for DG1
 run-name: Build Intel Media Driver 2024Q1 Release - 24.1.5
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - gh-actions
 jobs:
   build:
     runs-on: ubuntu-latest
