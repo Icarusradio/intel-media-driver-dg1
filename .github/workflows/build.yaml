@@ -8,33 +8,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Download GmmLib 22.3.18
+      run: |
+        echo "Downloading GmmLib 22.3.18 ..."
+        curl -O https://github.com/intel/gmmlib/archive/refs/tags/intel-gmmlib-22.3.18.tar.gz
+        tar xf intel-gmmlib-22.3.18.tar.gz
+        
     - name: Download Libva 2.21.0
-      uses: robinraju/release-downloader@v1.10
-      with:
-        repository: 'intel/libva'
-        tag: '2.21.0'
-        fileName: 'libva-2.21.0.tar.bz2'
-        tarBall: false
-        zipBall: false
-        extract: true
+      run: |
+        echo "Downloading Libva 2.21.0 ..."
+        curl -O https://github.com/intel/libva/releases/download/2.21.0/libva-2.21.0.tar.bz2
+        tar xf libva-2.21.0.tar.bz2
     
     - name: Download Intel Media Driver 24.1.5
-      uses: robinraju/release-downloader@v1.10
-      with:
-        repository: 'intel/media-driver'
-        latest: true
-        tag: 'intel-media-24.1.5'
-        tarBall: true
-        zipBall: true
-
-    - name: Download GmmLib 22.3.18
-      uses: robinraju/release-downloader@v1.10
-      with:
-        repository: 'intel/gmmlib'
-        tag: 'intel-gmmlib-22.3.18'
-        tarBall: true
-        zipBall: false
-        extract: true
+      run: |
+        echo "Downloading Intel Media Driver 24.1.5 ..."
+        curl -O https://github.com/intel/media-driver/archive/refs/tags/intel-media-24.1.5.tar.gz
+        tar xf intel-media-24.1.5.tar.gz
     
     - name: Build
       run: |
