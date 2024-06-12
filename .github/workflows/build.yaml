@@ -13,7 +13,8 @@ jobs:
       with:
         repository: 'intel/libva'
         tag: '2.21.0'
-        tarBall: true
+        fileName: 'libva-2.21.0.tar.bz2'
+        tarBall: false
         zipBall: false
         extract: true
     
@@ -21,10 +22,10 @@ jobs:
       uses: robinraju/release-downloader@v1.10
       with:
         repository: 'intel/media-driver'
+        latest: true
         tag: 'intel-media-24.1.5'
         tarBall: true
-        zipBall: false
-        extract: true
+        zipBall: true
 
     - name: Download GmmLib 22.3.18
       uses: robinraju/release-downloader@v1.10
