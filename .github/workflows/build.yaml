@@ -8,24 +8,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Download GmmLib 22.3.18
+    - name: Build GmmLib 22.3.18
       run: |
         echo "Downloading GmmLib 22.3.18 ..."
         curl -L -O https://github.com/intel/gmmlib/archive/refs/tags/intel-gmmlib-22.3.18.tar.gz
         tar xf intel-gmmlib-22.3.18.tar.gz
+        echo "Building GmmLib 22.3.18 ..."
+        cd gmmlib-intel-gmmlib-22.3.18
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        make -j"$(nproc)"
+        echo "Installing GmmLib 22.3.18 ..."
+        sudo make install
         
     - name: Download Libva 2.21.0
       run: |
         echo "Downloading Libva 2.21.0 ..."
+        pwd
         curl -L -O https://github.com/intel/libva/releases/download/2.21.0/libva-2.21.0.tar.bz2
         tar xf libva-2.21.0.tar.bz2
     
     - name: Download Intel Media Driver 24.1.5
       run: |
         echo "Downloading Intel Media Driver 24.1.5 ..."
+        pwd
         curl -L -O https://github.com/intel/media-driver/archive/refs/tags/intel-media-24.1.5.tar.gz
         tar xf intel-media-24.1.5.tar.gz
     
     - name: Build
       run: |
+        pwd
         ls -l
