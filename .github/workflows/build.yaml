@@ -27,7 +27,8 @@ jobs:
         curl -L -O https://github.com/intel/libva/releases/download/2.21.0/libva-2.21.0.tar.bz2
         tar xf libva-2.21.0.tar.bz2
         echo "Building Libva 2.21.0 ..."
-        sudo apt install git cmake pkg-config meson libdrm-dev automake libtool
+        sudo apt-get -y install git cmake pkg-config meson libdrm-dev automake libtool
+        ls -l
         cd libva-2.21.0
         ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
         make -j"$(nproc)"
