@@ -24,9 +24,15 @@ jobs:
     - name: Download Libva 2.21.0
       run: |
         echo "Downloading Libva 2.21.0 ..."
-        pwd
         curl -L -O https://github.com/intel/libva/releases/download/2.21.0/libva-2.21.0.tar.bz2
         tar xf libva-2.21.0.tar.bz2
+        echo "Building Libva 2.21.0 ..."
+        sudo apt install git cmake pkg-config meson libdrm-dev automake libtool
+        cd libva-2.21.0
+        ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+        make -j"$(nproc)"
+        echo "Installing Libva 2.21.0 ..."
+        sudo make install
     
     - name: Download Intel Media Driver 24.1.5
       run: |
