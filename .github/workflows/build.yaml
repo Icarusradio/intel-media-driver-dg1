@@ -1,0 +1,40 @@
+name: Build Intel Media Driver for DG1
+run-name: Build Intel Media Driver 2024Q1 Release - 24.1.5
+on:
+  workflow_dispatch:
+  push:
+    branches: [ gh-actions ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download GmmLib 22.3.18
+      uses: robinraju/release-downloader@v1.10
+      with:
+        repository: 'intel/gmmlib'
+        tag: 'intel-gmmlib-22.3.18'
+        tarBall: true
+        zipBall: false
+        extract: true
+    
+    - name: Download Libva 2.21.0
+      uses: robinraju/release-downloader@v1.10
+      with:
+        repository: 'intel/libva'
+        tag: '2.21.0'
+        tarBall: true
+        zipBall: false
+        extract: true
+    
+    - name: Download Intel Media Driver 24.1.5
+      uses: robinraju/release-downloader@v1.10
+      with:
+        repository: 'intel/media-driver'
+        tag: 'intel-media-24.1.5'
+        tarBall: true
+        zipBall: false
+        extract: true
+    
+    - name: Build
+      run: |
+        ls -l
