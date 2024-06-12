@@ -29,9 +29,10 @@ jobs:
         echo "Building Libva 2.21.0 ..."
         sudo apt-get -y install git cmake pkg-config meson libdrm-dev automake libtool
         cd libva-2.21.0
-        ls -l
-        ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
-        make -j"$(nproc)"
+        mkdir build
+        cd build
+        meson .. -Dprefix=/usr -Dlibdir=/usr/lib/x86_64-linux-gnu
+        ninja
         echo "Installing Libva 2.21.0 ..."
         sudo make install
     
