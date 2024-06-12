@@ -35,7 +35,7 @@ jobs:
         meson .. -Dprefix=/usr -Dlibdir=/usr/lib/x86_64-linux-gnu
         ninja
         echo "Installing Libva 2.21.0 ..."
-        sudo make install
+        sudo ninja install
     
     - name: Download Intel Media Driver 24.1.5
       run: |
