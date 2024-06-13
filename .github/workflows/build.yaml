@@ -50,9 +50,7 @@ jobs:
         cmake -DENABLE_PRODUCTION_KMD=ON -DBUILD_CMRTLIB=OFF ../media-driver-intel-media-24.1.5
         make -j"$(nproc)"
         echo "Installing Intel Media Driver 24.1.5 ..."
-        cd ..
-        mkdir -p install_media
-        DESTDIR="install_media" make -C build_media install
-        ls -l install_media
-        strip install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-        sha256sum install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+        mkdir -p ../install_media
+        DESTDIR="../install_media" make install
+        strip ../install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+        sha256sum ../install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so | tee ../SHA256SUM
