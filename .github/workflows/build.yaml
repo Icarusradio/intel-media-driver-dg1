@@ -53,4 +53,14 @@ jobs:
         mkdir -p ../install_media
         DESTDIR="../install_media" make install
         strip ../install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-        sha256sum ../install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so | tee ../SHA256SUM
+        cd ..
+        cp install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so .
+        sha256sum iHD_drv_video.so | tee SHA256SUM
+        ls -lh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          iHD_drv_video.so
+          SHA256SUM
