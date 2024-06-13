@@ -50,7 +50,6 @@ jobs:
         cmake -DENABLE_PRODUCTION_KMD=ON -DBUILD_CMRTLIB=OFF ../media-driver-intel-media-24.1.5
         make -j"$(nproc)"
         echo "Installing Intel Media Driver 24.1.5 ..."
-        cd ..
-        mkdir -p install_media
-        DESTDIR="install_media" make install
-        tree install_media
+        mkdir -p ../install_media
+        DESTDIR="../install_media" make install
+        tree ../install_media
