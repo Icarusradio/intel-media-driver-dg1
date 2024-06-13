@@ -52,15 +52,13 @@ jobs:
         echo "Installing Intel Media Driver 24.1.5 ..."
         mkdir -p ../install_media
         DESTDIR="../install_media" make install
-        strip ../install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-        cd ..
-        cp install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so .
+        cd ../install_media/usr/lib/x86_64-linux-gnu/dri
+        strip iHD_drv_video.so
         sha256sum iHD_drv_video.so | tee SHA256SUM
         ls -lh
 
-    - name: Upload artifact
+    - name: Upload iHD_drv_video.so
       uses: actions/upload-artifact@v4
       with:
-        path: |
-          iHD_drv_video.so
-          SHA256SUM
+        name: iHD_drv_video.so
+        path: install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
