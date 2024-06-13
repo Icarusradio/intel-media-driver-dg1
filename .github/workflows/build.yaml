@@ -53,6 +53,6 @@ jobs:
         cd ..
         mkdir -p install_media
         DESTDIR="install_media" make -C build_media install
+        ls -lh install_media/usr/lib/x86_64-linux-gnu/dri/
         strip install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-        ls -lh install_media/usr/lib/x86_64-linux-gnu/dri
         sha256sum install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
