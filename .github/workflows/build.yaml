@@ -44,12 +44,15 @@ jobs:
         curl -L -O https://github.com/intel/media-driver/archive/refs/tags/intel-media-24.1.5.tar.gz
         tar xf intel-media-24.1.5.tar.gz
         echo "Building Intel Media Driver 24.1.5 ..."
-        sudo apt-get -y install autoconf libtool libdrm-dev xorg xorg-dev openbox libx11-dev libgl1-mesa-glx tree
+        sudo apt-get -y install autoconf libtool libdrm-dev xorg xorg-dev openbox libx11-dev libgl1-mesa-glx
         mkdir -p build_media
         cd build_media
         cmake -DENABLE_PRODUCTION_KMD=ON -DBUILD_CMRTLIB=OFF ../media-driver-intel-media-24.1.5
         make -j"$(nproc)"
         echo "Installing Intel Media Driver 24.1.5 ..."
-        mkdir -p ../install_media
-        DESTDIR="../install_media" make install
-        tree ../install_media
+        cd ..
+        mkdir -p install_media
+        DESTDIR="install_media" make -C build_media install
+        strip install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+        ls -lh install_media/usr/lib/x86_64-linux-gnu/dri
+        sha256sum install_media/usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
