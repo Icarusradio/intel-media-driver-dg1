@@ -119,7 +119,8 @@ endif()
 option(LNL "Enable LNL support" ON)
 
 if(LNL)
-    option(XE2_LPM_PLUS_SUPPORT "Enable XE2_LPM_PLUS support" ON)
+    option(XE2_LPM_SUPPORT "Enable XE2_LPM support" ON)
+    option(XE2_HPG "Enable XE2_HPG support" ON)
 endif()
 
 if(LNL)
@@ -234,6 +235,11 @@ endif()
 
 if(ARL)
     add_definitions(-DIGFX_ARL_SUPPORTED)
+endif()
+
+if(XE2_HPG)
+    add_definitions(-DIGFX_XE2_HPG_SUPPORTED)
+    add_definitions(-DIGFX_XE2_HPG_CMFCPATCH_SUPPORTED)
 endif()
 
 if(LNL)

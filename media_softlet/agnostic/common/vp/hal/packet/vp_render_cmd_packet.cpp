@@ -214,30 +214,9 @@ MOS_STATUS VpRenderCmdPacket::Prepare()
         *m_surfMemCacheCtl,
         m_packetSharedContext));
 
-    if (m_submissionMode == MULTI_KERNELS_MULTI_MEDIA_STATES || m_submissionMode == SINGLE_KERNEL_ONLY)
+    if (m_submissionMode == SINGLE_KERNEL_ONLY)
     {
         m_kernelRenderData.clear();
-
-        if (m_submissionMode == MULTI_KERNELS_MULTI_MEDIA_STATES)
-        {
-            bool bAllocated = false;
-            VP_RENDER_CHK_STATUS_RETURN(m_renderHal->pfnReAllocateStateHeapsforAdvFeatureWithSshEnlarged(m_renderHal, bAllocated));
-
-            if (bAllocated && m_renderHal->pStateHeap)
-            {
-                MHW_STATE_BASE_ADDR_PARAMS *pStateBaseParams = &m_renderHal->StateBaseAddressParams;
-
-                pStateBaseParams->presGeneralState           = &m_renderHal->pStateHeap->GshOsResource;
-                pStateBaseParams->dwGeneralStateSize         = m_renderHal->pStateHeap->dwSizeGSH;
-                pStateBaseParams->presDynamicState           = &m_renderHal->pStateHeap->GshOsResource;
-                pStateBaseParams->dwDynamicStateSize         = m_renderHal->pStateHeap->dwSizeGSH;
-                pStateBaseParams->bDynamicStateRenderTarget  = false;
-                pStateBaseParams->presIndirectObjectBuffer   = &m_renderHal->pStateHeap->GshOsResource;
-                pStateBaseParams->dwIndirectObjectBufferSize = m_renderHal->pStateHeap->dwSizeGSH;
-                pStateBaseParams->presInstructionBuffer      = &m_renderHal->pStateHeap->IshOsResource;
-                pStateBaseParams->dwInstructionBufferSize    = m_renderHal->pStateHeap->dwSizeISH;
-            }
-        }
 
         VP_RENDER_CHK_NULL_RETURN(m_renderHal->pStateHeap);
 
@@ -412,11 +391,13 @@ MOS_STATUS VpRenderCmdPacket::SetupSamplerStates()
             MOS_STATUS_INVALID_PARAMETER;
         }
 
-        VP_RENDER_CHK_STATUS_RETURN(m_renderHal->pfnSetSamplerStates(
+        VP_RENDER_CHK_STATUS_RETURN(m_renderHal->pfnSetAndGetSamplerStates(
             m_renderHal,
             m_renderData.mediaID,
             &samplerStates[0],
-            samplerStates.size()));
+            samplerStates.size(),
+            m_kernel->GetBindlessSamplers()));
+
     }
 
     return MOS_STATUS_SUCCESS;
@@ -430,13 +411,8 @@ MOS_STATUS VpRenderCmdPacket::Submit(MOS_COMMAND_BUFFER *commandBuffer, uint8_t 
         VP_RENDER_ASSERTMESSAGE("No Kernel Object Creation");
         return MOS_STATUS_NULL_POINTER;
     }
-    if (m_submissionMode == MULTI_KERNELS_MULTI_MEDIA_STATES)
-    {
-        VP_RENDER_CHK_STATUS_RETURN(SetupMediaWalker());
 
-        VP_RENDER_CHK_STATUS_RETURN(SubmitWithMultiKernel(commandBuffer, packetPhase));
-    }
-    else if (m_submissionMode == SINGLE_KERNEL_ONLY)
+    if (m_submissionMode == SINGLE_KERNEL_ONLY)
     {
         VP_RENDER_CHK_STATUS_RETURN(SetupMediaWalker());
 
@@ -676,6 +652,7 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
     VP_RENDER_CHK_NULL_RETURN(m_renderHal);
     VP_RENDER_CHK_NULL_RETURN(m_renderHal->pOsInterface);
 
+
     if (!m_kernel->GetKernelSurfaceConfig().empty())
     {
         for (auto surface = m_kernel->GetKernelSurfaceConfig().begin(); surface != m_kernel->GetKernelSurfaceConfig().end(); surface++)
@@ -756,6 +733,7 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
                 bWrite = false;
             }
 
+            std::set<uint32_t> stateOffsets;
             if (kernelSurfaceParam->surfaceOverwriteParams.bindedKernel && !kernelSurfaceParam->surfaceOverwriteParams.bufferResource)
             {
                 auto bindingMap = m_kernel->GetSurfaceBindingIndex(type);
@@ -769,6 +747,7 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
                     &renderSurfaceParams,
                     bindingMap,
                     bWrite,
+                    stateOffsets,
                     kernelSurfaceParam->iCapcityOfSurfaceEntry,
                     kernelSurfaceParam->surfaceEntries,
                     kernelSurfaceParam->sizeOfSurfaceEntries));
@@ -776,7 +755,6 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
                 {
                     VP_RENDER_NORMALMESSAGE("Using Binded Index Surface. KernelID %d, SurfType %d, bti %d", m_kernel->GetKernelId(), type, bti);
                 }
-                
             }
             else
             {
@@ -794,7 +772,8 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
                         &renderHalSurface,
                         &renderSurfaceParams,
                         bindingMap,
-                        bWrite));
+                        bWrite,
+                        stateOffsets));
                     for (uint32_t const &bti : bindingMap)
                     {
                         VP_RENDER_NORMALMESSAGE("Using Binded Index Buffer. KernelID %d, SurfType %d, bti %d", m_kernel->GetKernelId(), type, bti);
@@ -811,7 +790,8 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
                         &renderHalSurface.OsSurface,
                         &renderHalSurface,
                         &renderSurfaceParams,
-                        bWrite);
+                        bWrite,
+                        stateOffsets);
                     VP_RENDER_CHK_STATUS_RETURN(m_kernel->UpdateCurbeBindingIndex(type, index));
                     VP_RENDER_NORMALMESSAGE("Using UnBinded Index Buffer. KernelID %d, SurfType %d, bti %d", m_kernel->GetKernelId(), type, index);
                 }
@@ -821,10 +801,16 @@ MOS_STATUS VpRenderCmdPacket::SetupSurfaceState()
                         &renderHalSurface.OsSurface,
                         &renderHalSurface,
                         &renderSurfaceParams,
-                        bWrite);
+                        bWrite,
+                        stateOffsets);
                     VP_RENDER_CHK_STATUS_RETURN(m_kernel->UpdateCurbeBindingIndex(type, index));
                     VP_RENDER_NORMALMESSAGE("Using UnBinded Index Surface. KernelID %d, SurfType %d, bti %d. If 1D buffer overwrite to 2D for use, it will go SetSurfaceForHwAccess()", m_kernel->GetKernelId(), type, index);
                 }
+            }
+
+            if (stateOffsets.size() > 0)
+            {
+                m_kernel->UpdateBindlessSurfaceResource(type, stateOffsets);
             }
         }
         VP_RENDER_CHK_STATUS_RETURN(m_kernel->UpdateCompParams());
@@ -1832,10 +1818,11 @@ void VpRenderCmdPacket::PrintWalkerParas(MHW_GPGPU_WALKER_PARAMS& WalkerParams)
         WalkerParams.GroupStartingY,
         WalkerParams.GroupStartingZ,
         WalkerParams.SLMSize);
-    VP_RENDER_VERBOSEMESSAGE("GpGPU WalkerParams: GenerateLocalId %d, EmitLocal %d, EmitInlineParameter %d",
+    VP_RENDER_VERBOSEMESSAGE("GpGPU WalkerParams: GenerateLocalId %d, EmitLocal %d, EmitInlineParameter %d, HasBarrier %d",
         WalkerParams.isGenerateLocalID,
         WalkerParams.emitLocal,
-        WalkerParams.isEmitInlineParameter);
+        WalkerParams.isEmitInlineParameter,
+        WalkerParams.hasBarrier);
     VP_RENDER_VERBOSEMESSAGE("GpGPU WalkerParams: InlineDataLength = %d, InlineData = %s",
         WalkerParams.inlineDataLength,
         inlineData.c_str());
@@ -1924,7 +1911,7 @@ MOS_STATUS VpRenderCmdPacket::SendMediaStates(
     // Send State Base Address command
     MHW_RENDERHAL_CHK_STATUS(pRenderHal->pfnSendStateBaseAddress(pRenderHal, pCmdBuffer));
 
-    if (pRenderHal->bComputeContextInUse)
+    if (pRenderHal->bComputeContextInUse && !pRenderHal->isBindlessHeapInUse)
     {
         pRenderHal->pRenderHalPltInterface->SendTo3DStateBindingTablePoolAlloc(pRenderHal, pCmdBuffer);
     }
@@ -1946,8 +1933,11 @@ MOS_STATUS VpRenderCmdPacket::SendMediaStates(
     }
     else
     {
-        // set CFE State
-        MHW_RENDERHAL_CHK_STATUS(pRenderHal->pRenderHalPltInterface->AddCfeStateCmd(pRenderHal, pCmdBuffer, pVfeStateParams));
+        if (!pRenderHal->isBindlessHeapInUse)
+        {
+            // set CFE State
+            MHW_RENDERHAL_CHK_STATUS(pRenderHal->pRenderHalPltInterface->AddCfeStateCmd(pRenderHal, pCmdBuffer, pVfeStateParams));
+        }
     }
 
     // Send CURBE Load
@@ -2023,14 +2013,7 @@ MOS_STATUS VpRenderCmdPacket::SendMediaStates(
 
             MHW_RENDERHAL_CHK_STATUS(PrepareComputeWalkerParams(it->second.walkerParam, m_gpgpuWalkerParams));
 
-            if (m_submissionMode == MULTI_KERNELS_MULTI_MEDIA_STATES)
-            {
-                pRenderHal->pStateHeap->pCurMediaState = it->second.mediaState;
-                MHW_RENDERHAL_CHK_NULL(pRenderHal->pStateHeap->pCurMediaState);
-                pRenderHal->iKernelAllocationID        = it->second.kernelAllocationID;
-                pRenderHal->pStateHeap->pCurMediaState->bBusy = true;
-            }
-            else if (m_submissionMode == MULTI_KERNELS_SINGLE_MEDIA_STATE)
+            if (m_submissionMode == MULTI_KERNELS_SINGLE_MEDIA_STATE)
             {
                 pRenderHal->iKernelAllocationID = it->second.kernelAllocationID;
             }
@@ -2073,31 +2056,6 @@ MOS_STATUS VpRenderCmdPacket::SetFcParams(PRENDER_FC_PARAMS params)
     m_renderKernelParams.push_back(kernelParams);
     m_isMultiBindingTables = false;
     m_submissionMode       = SINGLE_KERNEL_ONLY;
-    return MOS_STATUS_SUCCESS;
-}
-
-MOS_STATUS VpRenderCmdPacket::SetL0FcParams(PRENDER_L0_FC_PARAMS params)
-{
-    VP_FUNC_CALL();
-    VP_RENDER_CHK_NULL_RETURN(params);
-
-    KERNEL_PARAMS kernelParam = {};
-    for (auto &krnParams : params->fc_kernelParams)
-    {
-        kernelParam.kernelId                       = krnParams.kernelId;
-        kernelParam.kernelArgs                     = krnParams.kernelArgs;
-        kernelParam.kernelThreadSpace.uWidth       = krnParams.threadWidth;
-        kernelParam.kernelThreadSpace.uHeight      = krnParams.threadHeight;
-        kernelParam.kernelThreadSpace.uLocalWidth  = krnParams.localWidth;
-        kernelParam.kernelThreadSpace.uLocalHeight = krnParams.localHeight;
-        kernelParam.syncFlag                       = true;
-
-        m_renderKernelParams.push_back(kernelParam);
-    }
-
-    m_submissionMode            = MULTI_KERNELS_SINGLE_MEDIA_STATE;
-    m_isMultiBindingTables      = true;
-    m_isLargeSurfaceStateNeeded = true;
     return MOS_STATUS_SUCCESS;
 }
 

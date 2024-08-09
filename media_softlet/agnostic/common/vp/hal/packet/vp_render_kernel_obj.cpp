@@ -158,6 +158,12 @@ MOS_STATUS VpRenderKernelObj::SetKernelArgs(KERNEL_ARGS &kernelArgs, VP_PACKET_S
     return MOS_STATUS_SUCCESS;
 }
 
+MOS_STATUS VpRenderKernelObj::SetKernelStatefulSurfaces(KERNEL_ARG_INDEX_SURFACE_MAP& statefulSurfaces)
+{
+    VP_FUNC_CALL();
+    return MOS_STATUS_SUCCESS;
+}
+
 // Only for Adv kernels.
 MOS_STATUS VpRenderKernelObj::SetKernelConfigs(
     KERNEL_PARAMS& kernelParams,
@@ -171,6 +177,8 @@ MOS_STATUS VpRenderKernelObj::SetKernelConfigs(
     VP_RENDER_CHK_STATUS_RETURN(SetKernelConfigs(kernelConfigs));
 
     VP_RENDER_CHK_STATUS_RETURN(SetKernelArgs(kernelParams.kernelArgs, sharedContext));
+
+    VP_RENDER_CHK_STATUS_RETURN(SetKernelStatefulSurfaces(kernelParams.kernelStatefulSurfaces));
 
     VP_RENDER_CHK_STATUS_RETURN(SetProcessSurfaceGroup(surfaces));
 
@@ -256,6 +264,7 @@ MOS_STATUS VpRenderKernelObj::SetupStatelessBufferResource(SurfaceType surf)
 MOS_STATUS VpRenderKernelObj::SetProcessSurfaceGroup(VP_SURFACE_GROUP &surfaces)
 {
     m_surfaceGroup = &surfaces;
+    VP_RENDER_CHK_STATUS_RETURN(InitBindlessResources());
     VP_RENDER_CHK_STATUS_RETURN(SetupSurfaceState());
     VP_RENDER_CHK_STATUS_RETURN(CpPrepareResources());
     VP_RENDER_CHK_STATUS_RETURN(SetupStatelessBuffer());
@@ -731,3 +740,32 @@ void VpRenderKernelObj::DumpSurface(VP_SURFACE* pSurface, PCCHAR fileName)
 #endif
 }
 
+MOS_STATUS VpRenderKernelObj::SetInlineDataParameter(KRN_ARG args, RENDERHAL_INTERFACE *renderhal)
+{
+    VP_FUNC_CALL();
+    MHW_INLINE_DATA_PARAMS inlineDataPar = {};
+    VP_RENDER_CHK_NULL_RETURN(renderhal);
+    MHW_STATE_BASE_ADDR_PARAMS *pStateBaseParams = &renderhal->StateBaseAddressParams;
+    inlineDataPar.dwOffset                       = args.uOffsetInPayload;
+    inlineDataPar.dwSize                         = args.uSize;
+    if (args.implicitArgType == IndirectDataPtr || args.implicitArgType == SamplerStateBasePtr)
+    {
+        inlineDataPar.resource = pStateBaseParams->presGeneralState;
+        inlineDataPar.isPtrType = true;
+    }
+    else if (args.implicitArgType == SurfaceStateBasePtr)
+    {
+        // New Heaps
+        inlineDataPar.isPtrType = true;
+    }
+    else if (args.implicitArgType == ValueType)
+    {
+        inlineDataPar.isPtrType = false;
+    }
+
+    // walkerParam.inlineDataParamBase will add m_inlineDataParams.data() in each kernel
+    // walkerParam.inlineDataParamSize will add m_inlineDataParams.size() in each kernel
+    m_inlineDataParams.push_back(inlineDataPar);
+
+    return MOS_STATUS_SUCCESS;
+}

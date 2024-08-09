@@ -61,6 +61,13 @@ struct MHW_VFE_SCOREBOARD
     MHW_VFE_SCOREBOARD_DELTA ScoreboardDelta[MHW_MAX_DEPENDENCY_COUNT] = {};
 };
 
+struct MHW_HEAPS_RESOURCE
+{
+    PMOS_RESOURCE          presInstructionBuffer = nullptr;
+    PMHW_INLINE_DATA_PARAMS inlineDataParamsBase   = nullptr;
+    uint32_t                inlineDataParamSize   = 0;
+};
+
 enum MHW_VFE_SLICE_DISABLE
 {
     MHW_VFE_SLICE_ALL = 0,
@@ -219,6 +226,7 @@ struct _MHW_PAR_T(STATE_BASE_ADDRESS)
     uint32_t                mocs4IndirectObjectBuffer  = 0;
     uint32_t                mocs4StatelessDataport     = 0;
     uint32_t                l1CacheConfig              = 0;
+    bool                    addressDis                 = false;
 };
 
 struct _MHW_PAR_T(MEDIA_VFE_STATE)
@@ -390,7 +398,10 @@ struct _MHW_PAR_T(COMPUTE_WALKER)
     uint8_t                   *inlineData                   = nullptr;
     bool                      isGenerateLocalId             = false;
     MHW_EMIT_LOCAL_MODE       emitLocal                     = MHW_EMIT_LOCAL_NONE;
-    
+    uint32_t                  preferredSlmAllocationSize    = 0;
+    _MHW_PAR_T(CFE_STATE)     cfeState                      = {};
+    MHW_HEAPS_RESOURCE        heapsResource                 = {};
+
 };
 
 struct _MHW_PAR_T(STATE_COMPUTE_MODE)

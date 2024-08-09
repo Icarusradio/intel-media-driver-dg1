@@ -181,40 +181,90 @@ MOS_STATUS VpVeboxCmdPacket::SetupVeboxExternal3DLutforHDR(
     return MOS_STATUS_SUCCESS;
 }
 
-MOS_STATUS VpVeboxCmdPacket::SetupVebox3DLutForHDR(
-    mhw::vebox::VEBOX_STATE_PAR &veboxStateCmdParams)
+MOS_STATUS VpVeboxCmdPacket::Add1DLutState(PVP_SURFACE &surface, PMHW_1DLUT_PARAMS p1DLutParams)
 {
-    PMHW_VEBOX_MODE   pVeboxMode = nullptr;
-    PMHW_VEBOX_3D_LUT pLUT3D     = nullptr;
-    PVP_SURFACE       surf3DLut  = GetSurface(SurfaceType3DLut);
+    VP_FUNC_CALL();
+    if (m_PacketCaps.b1K1DLutInited)
+    {
+        VP_RENDER_NORMALMESSAGE("1K1DLut Surface is reused for HDR");
+        return MOS_STATUS_SUCCESS;
+    }
+    VP_RENDER_CHK_NULL_RETURN(surface);
+    void *sur = (void *)m_allocator->LockResourceForWrite(&surface->osSurface->OsResource);
+    VP_PUBLIC_CHK_NULL_RETURN(sur);
     VpVeboxRenderData *pRenderData = GetLastExecRenderData();
+    VP_PUBLIC_CHK_NULL_RETURN(m_veboxItf);
+    VP_PUBLIC_CHK_NULL_RETURN(pRenderData);
+
+    if (m_veboxItf)
+    {
+        m_veboxItf->Add1DLutState(sur, p1DLutParams);
+        VP_RENDER_NORMALMESSAGE("1K1DLut Surface is inited for HDR");
+    }
+
+    VP_PUBLIC_CHK_STATUS_RETURN(m_allocator->UnLock(&surface->osSurface->OsResource));
+    return MOS_STATUS_SUCCESS;
+}
+
+MOS_STATUS VpVeboxCmdPacket::SetupVebox3DLutForHDR(mhw::vebox::VEBOX_STATE_PAR &veboxStateCmdParams)
+{
+    PMHW_VEBOX_MODE       pVeboxMode     = nullptr;
+    PMHW_VEBOX_3D_LUT     pLUT3D         = nullptr;
+    PMHW_1DLUT_PARAMS     p1DLutParams   = nullptr;
+    PVP_SURFACE           surf3DLut      = GetSurface(SurfaceType3DLut);
+    VpVeboxRenderData    *pRenderData    = GetLastExecRenderData();
 
     VP_RENDER_CHK_NULL_RETURN(m_surfMemCacheCtl);
     VP_RENDER_CHK_NULL_RETURN(surf3DLut);
     VP_RENDER_CHK_NULL_RETURN(surf3DLut->osSurface);
     VP_RENDER_CHK_NULL_RETURN(pRenderData);
-
     VP_RENDER_CHK_STATUS_RETURN(Init3DLutTable(surf3DLut));
 
-    pVeboxMode  = &veboxStateCmdParams.VeboxMode;
-    pLUT3D      = &veboxStateCmdParams.LUT3D;
+    pVeboxMode                         = &veboxStateCmdParams.VeboxMode;
+    pLUT3D                             = &veboxStateCmdParams.LUT3D;
+    p1DLutParams                       = &(pRenderData->GetIECPParams().s1DLutParams);
 
-    pLUT3D->ArbitrationPriorityControl      = 0;
-    pLUT3D->Lut3dEnable                     = true;
+    VP_RENDER_CHK_NULL_RETURN(pVeboxMode);
+    VP_RENDER_CHK_NULL_RETURN(p1DLutParams);
+    VP_RENDER_CHK_NULL_RETURN(pLUT3D);
+
+    pLUT3D->ArbitrationPriorityControl = 0;
+    pLUT3D->Lut3dEnable                = true;
     // Config 3DLut size to 65 for HDR10 usage.
-    pLUT3D->Lut3dSize                       = 2;
+    pLUT3D->Lut3dSize = 2;
     if (pRenderData->HDR3DLUT.uiLutSize == 33)
     {
         pLUT3D->Lut3dSize = 0;  // 33x33x33
     }
 
-    veboxStateCmdParams.Vebox3DLookUpTablesSurfCtrl.Value =
-        m_surfMemCacheCtl->DnDi.Vebox3DLookUpTablesSurfMemObjCtl;
+    veboxStateCmdParams.Vebox3DLookUpTablesSurfCtrl.Value = m_surfMemCacheCtl->DnDi.Vebox3DLookUpTablesSurfMemObjCtl;
 
-    pVeboxMode->ColorGamutExpansionEnable       = true;
+    //Use 1K1DLUT instead of Gamut Expansion
+    pVeboxMode->ColorGamutExpansionEnable = false;
 
-    veboxStateCmdParams.pVebox3DLookUpTables  = &surf3DLut->osSurface->OsResource;
+    PVP_SURFACE surface = GetSurface(SurfaceType1k1dLut);
+    VP_RENDER_CHK_NULL_RETURN(surface);
+    VP_RENDER_CHK_STATUS_RETURN(Add1DLutState(surface, nullptr));
 
+    veboxStateCmdParams.pVebox1DLookUpTables = &(surface->osSurface->OsResource);
+    pVeboxMode->Hdr1K1DLut                   = true;
+    pVeboxMode->Hdr1DLutEnable               = true;
+    VP_RENDER_CHK_STATUS_RETURN(m_veboxItf->SetDisableHistogram(&pRenderData->GetIECPParams()));
+
+    veboxStateCmdParams.pVebox3DLookUpTables = &surf3DLut->osSurface->OsResource;
+
+    VP_RENDER_CHK_STATUS_RETURN(SetupHDRUnifiedForHDR(veboxStateCmdParams));
+
+    return MOS_STATUS_SUCCESS;
+}
+
+MOS_STATUS VpVeboxCmdPacket::SetupHDRUnifiedForHDR(mhw::vebox::VEBOX_STATE_PAR &veboxStateCmdParams)
+{
+    PMHW_VEBOX_MODE    pVeboxMode   = nullptr;
+
+    pVeboxMode   = &veboxStateCmdParams.VeboxMode;
+ 
+    pVeboxMode->Hdr1K1DLut = true;
     return MOS_STATUS_SUCCESS;
 }
 
@@ -249,12 +299,16 @@ MOS_STATUS VpVeboxCmdPacket::SetupVeboxState(mhw::vebox::VEBOX_STATE_PAR& veboxS
     VP_FUNC_CALL();
 
     PMHW_VEBOX_MODE         pVeboxMode   = nullptr;
+    PMHW_FP16_PARAMS        fp16Params = nullptr;
 
     pVeboxMode = &veboxStateCmdParams.VeboxMode;
     VP_RENDER_CHK_NULL_RETURN(pVeboxMode);
 
     VpVeboxRenderData* pRenderData = GetLastExecRenderData();
     VP_RENDER_CHK_NULL_RETURN(pRenderData);
+
+    fp16Params = &(pRenderData->GetIECPParams().fp16Params);
+    VP_RENDER_CHK_NULL_RETURN(fp16Params);
 
     MOS_ZeroMemory(&veboxStateCmdParams, sizeof(veboxStateCmdParams));
 
@@ -303,6 +357,11 @@ MOS_STATUS VpVeboxCmdPacket::SetupVeboxState(mhw::vebox::VEBOX_STATE_PAR& veboxS
 
     VP_RENDER_CHK_STATUS_RETURN(SetupHDRLuts(veboxStateCmdParams));
     VP_RENDER_CHK_STATUS_RETURN(SetupDNTableForHVS(veboxStateCmdParams));
+
+    if (fp16Params->isActive == 1)
+    {
+        VP_RENDER_CHK_STATUS_RETURN(SetupVeboxFP16State(veboxStateCmdParams));
+    }
 
     veboxStateCmdParams.bCmBuffer = false;
 
@@ -1001,7 +1060,7 @@ MOS_STATUS VpVeboxCmdPacket::SetSteParams(
 MOS_STATUS VpVeboxCmdPacket::UpdateCscParams(FeatureParamCsc &params)
 {
     VP_FUNC_CALL();
-    // Scaing only can be apply to SFC path
+    // Csc only can be apply to SFC path
     if (m_PacketCaps.bSfcCsc)
     {
         VP_PUBLIC_CHK_STATUS_RETURN(m_sfcRender->UpdateCscParams(params));
@@ -1017,10 +1076,9 @@ MOS_STATUS VpVeboxCmdPacket::UpdateDenoiseParams(FeatureParamDenoise &params)
     VpVeboxRenderData *pRenderData = GetLastExecRenderData();
     VP_RENDER_CHK_NULL_RETURN(pRenderData);
 
-    // ConfigureTccParams() just includes logic that both used in SetTccParams and UpdateTccParams.
+    // ConfigureDenoiseParams() just includes logic that both used in SetDenoiseParams and UpdateDenoiseParams..
     VP_PUBLIC_CHK_STATUS_RETURN(ConfigureDenoiseParams(pRenderData, params.denoiseParams.fDenoiseFactor));
 
-    // bDNDITopFirst in DNDI parameters need be configured during UpdateDIParams after DI parameter packet reusing being enabled.
     return MOS_STATUS_SUCCESS;
 }
 

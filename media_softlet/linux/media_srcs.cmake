@@ -27,3 +27,8 @@ endif()
 if(MTL OR ARL)
     media_include_subdirectory(Xe_M_plus)
 endif()
+
+if(XE2_LPM_SUPPORT)
+media_include_subdirectory(xe2_lpm)
+media_include_subdirectory(xe2_lpm_r0)
+endif()

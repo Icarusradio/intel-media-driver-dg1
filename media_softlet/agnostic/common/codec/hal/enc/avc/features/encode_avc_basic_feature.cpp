@@ -281,8 +281,6 @@ MOS_STATUS AvcBasicFeature::SetSequenceStructs()
     seqParams->bit_depth_luma_minus8   = 0;
     seqParams->bit_depth_chroma_minus8 = 0;
 
-    seqParams->NumRefFrames = seqParams->NumRefFrames * 2;
-
     // setup parameters corresponding to H264 bit stream definition
     seqParams->pic_height_in_map_units_minus1       = seqParams->frame_mbs_only_flag ? CODECHAL_GET_HEIGHT_IN_MACROBLOCKS(seqParams->FrameHeight) - 1 : (CODECHAL_GET_HEIGHT_IN_MACROBLOCKS(seqParams->FrameHeight) + 1) / 2 - 1;
     seqParams->pic_width_in_mbs_minus1              = CODECHAL_GET_WIDTH_IN_MACROBLOCKS(seqParams->FrameWidth) - 1;
@@ -586,12 +584,18 @@ void AvcBasicFeature::CheckResolutionChange()
 
     uint32_t frameWidth = m_seqParam->FrameWidth;
     uint32_t frameHeight = m_seqParam->FrameHeight;
+    uint16_t frame_crop_bottom_offset = m_seqParam->frame_crop_bottom_offset;
+    uint16_t frame_mbs_only_flag      = m_seqParam->frame_mbs_only_flag;
+    uint16_t frame_cropping_flag      = m_seqParam->frame_cropping_flag;
 
     // Only for first frame
     if (m_frameNum == 0)
     {
         m_oriFrameHeight = frameHeight;
         m_oriFrameWidth = frameWidth;
+        m_frame_crop_bottom_offset = frame_crop_bottom_offset;
+        m_frame_mbs_only_flag        = frame_mbs_only_flag;
+        m_frame_cropping_flag      = frame_cropping_flag;
         m_resolutionChanged = true;
     }
     else
@@ -603,6 +607,9 @@ void AvcBasicFeature::CheckResolutionChange()
             m_resolutionChanged = true;
             m_oriFrameHeight = frameHeight;
             m_oriFrameWidth = frameWidth;
+            m_frame_crop_bottom_offset = frame_crop_bottom_offset;
+            m_frame_mbs_only_flag      = frame_mbs_only_flag;
+            m_frame_cropping_flag      = frame_cropping_flag;
         }
         else
         {

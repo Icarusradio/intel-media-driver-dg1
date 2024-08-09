@@ -3461,7 +3461,7 @@ VAStatus DdiMedia_MapBufferInternal (
                     *pbuf = (void *)((uint8_t*)(bufMgr->Codec_Param.Codec_Param_VP9.pVASliceParaBufVP9) + buf->uiOffset);
                     break;
                 case CODECHAL_DECODE_MODE_AV1VLD:
-                case CODECHAL_DECODE_MODE_RESERVED0:
+                case CODECHAL_DECODE_MODE_VVCVLD:
                     *pbuf = (void *)((uint8_t*)(bufMgr->pCodecSlcParamReserved) + buf->uiOffset);
                     break;
                 default:
@@ -4609,6 +4609,7 @@ VAStatus DdiMedia_CreateImage(
     gmmParams.Type              = RESOURCE_2D;
     gmmParams.Flags.Gpu.Video   = true;
     gmmParams.Format            = mediaCtx->m_caps->ConvertFourccToGmmFmt(format->fourcc);
+    gmmParams.Flags.Info.Linear = 1;
 
     if (gmmParams.Format == GMM_FORMAT_INVALID)
     {
@@ -4693,6 +4694,10 @@ VAStatus DdiMedia_CreateImage(
             vaimg->pitches[1] = pitch;
             vaimg->offsets[0] = 0;
             vaimg->offsets[1] = offsetU;
+            if (height % 2 == 1)
+            {
+                vaimg->data_size += pitch;
+            }
             break;
         case VA_FOURCC_YV12:
             vaimg->num_planes = 3;
@@ -5610,7 +5615,7 @@ VAStatus DdiMedia_PutImage(
         }
 
         //Copy data from image to temp surferce
-        MOS_STATUS eStatus = MOS_SecureMemcpy(tempSurfData, vaimg->data_size, imageData, vaimg->data_size);
+        MOS_STATUS eStatus = MOS_SecureMemcpy(tempSurfData, tempMediaSurface->data_size, imageData, vaimg->data_size);
         if (eStatus != MOS_STATUS_SUCCESS)
         {
             DDI_ASSERTMESSAGE("Failed to copy image to surface buffer.");
@@ -5692,18 +5697,20 @@ VAStatus DdiMedia_PutImage(
             {
                 DDI_MEDIA_SURFACE uPlane = *mediaSurface;
 
-                uint32_t chromaHeight      = 0;
-                uint32_t chromaPitch       = 0;
-                DdiMedia_GetChromaPitchHeight(DdiMedia_MediaFormatToOsFormat(uPlane.format), uPlane.iPitch, uPlane.iHeight, &chromaPitch, &chromaHeight);
+                uint32_t realChromaHeight      = 0;
+                uint32_t alignedChromaHeight   = 0;
+                uint32_t chromaPitch           = 0;
+                DdiMedia_GetChromaPitchHeight(DdiMedia_MediaFormatToOsFormat(uPlane.format), uPlane.iPitch, uPlane.iRealHeight, &chromaPitch, &realChromaHeight);
+                DdiMedia_GetChromaPitchHeight(DdiMedia_MediaFormatToOsFormat(uPlane.format), uPlane.iPitch, uPlane.iHeight, &chromaPitch, &alignedChromaHeight);
 
                 uint8_t *uSrc = (uint8_t *)imageData + vaimg->offsets[1];
                 uint8_t *uDst = yDst + mediaSurface->iPitch * mediaSurface->iHeight;
-                DdiMedia_CopyPlane(uDst, chromaPitch, uSrc, vaimg->pitches[1], chromaHeight);
+                DdiMedia_CopyPlane(uDst, chromaPitch, uSrc, vaimg->pitches[1], realChromaHeight);
                 if (vaimg->num_planes > 2)
                 {
                     uint8_t *vSrc = (uint8_t *)imageData + vaimg->offsets[2];
-                    uint8_t *vDst = uDst + chromaPitch * chromaHeight;
-                    DdiMedia_CopyPlane(vDst, chromaPitch, vSrc, vaimg->pitches[2], chromaHeight);
+                    uint8_t *vDst = uDst + chromaPitch * alignedChromaHeight;
+                    DdiMedia_CopyPlane(vDst, chromaPitch, vSrc, vaimg->pitches[2], realChromaHeight);
                 }
             }
         } 
@@ -6721,6 +6728,23 @@ DdiMedia_QueryVideoProcPipelineCaps(
         pipeline_caps->min_input_height           = VP_MIN_PIC_HEIGHT;
         pipeline_caps->min_output_width           = VP_MIN_PIC_WIDTH;
         pipeline_caps->min_output_height          = VP_MIN_PIC_WIDTH;
+    }
+
+    
+    for (int i = 0; i < num_filters; i++) {
+        void *pData;
+        DdiMedia_MapBuffer(ctx, filters[i], &pData);
+        DDI_CHK_NULL(pData, "nullptr pData", VA_STATUS_ERROR_INVALID_PARAMETER);
+        VAProcFilterParameterBufferBase* base_param = (VAProcFilterParameterBufferBase*) pData;
+        if (base_param->type == VAProcFilterDeinterlacing)
+        {
+            VAProcFilterParameterBufferDeinterlacing *di_param = (VAProcFilterParameterBufferDeinterlacing *)base_param;
+            if (di_param->algorithm == VAProcDeinterlacingMotionAdaptive ||
+                di_param->algorithm == VAProcDeinterlacingMotionCompensated)
+            {
+                pipeline_caps->num_forward_references = 1;
+            }
+        }
     }
     return VA_STATUS_SUCCESS;
 }

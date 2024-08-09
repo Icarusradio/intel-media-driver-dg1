@@ -80,6 +80,15 @@ enum KRN_ARG_ADDRESSMODE
     AddressIngModeMax
 };
 
+enum IMPLICIT_ARG_TYPE
+{
+    ValueType = 0,
+    IndirectDataPtr,
+    ScratchPtr,
+    SamplerStateBasePtr,
+    SurfaceStateBasePtr
+};
+
 struct KRN_ARG
 {
     uint32_t               uIndex;
@@ -89,6 +98,7 @@ struct KRN_ARG
     KRN_ARG_KIND           eArgKind;
     bool                   isOutput;
     KRN_ARG_ADDRESSMODE    addressMode;
+    IMPLICIT_ARG_TYPE      implicitArgType;
 };
 
 //for L0 use only
@@ -116,6 +126,7 @@ struct KRN_EXECUTE_ENV
     bool     bHas4GBBuffers;
     uint8_t  uiWorkGroupWalkOrderDimensions[3];
     uint64_t uiPrivateSize;
+    uint32_t uiSlmSize;
 };
 
 using SurfaceIndex = uint32_t;
@@ -126,7 +137,6 @@ enum KERNEL_SUBMISSION_MODE
 {
     SINGLE_KERNEL_ONLY = 0,
     MULTI_KERNELS_SINGLE_MEDIA_STATE,
-    MULTI_KERNELS_MULTI_MEDIA_STATES
 };
 
 typedef struct _VP_RENDER_CACHE_CNTL

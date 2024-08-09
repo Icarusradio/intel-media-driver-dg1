@@ -70,7 +70,8 @@ typedef struct _KERNEL_SURFACE_STATE_PARAM
     bool                                isOutput;        // true for render target
     PRENDERHAL_SURFACE_STATE_ENTRY      *surfaceEntries;
     uint32_t                            *sizeOfSurfaceEntries;
-    uint32_t                             iCapcityOfSurfaceEntry = 0;
+    uint32_t                            iCapcityOfSurfaceEntry = 0;
+    bool                                isBindlessSurface = false;
 } KERNEL_SURFACE_STATE_PARAM;
 
 typedef struct _KERNEL_TUNING_PARAMS
@@ -82,6 +83,7 @@ typedef struct _SURFACE_PARAMS
 {
     SurfaceType surfType;
     bool        isOutput;
+    bool        needVerticalStirde;
 } SURFACE_PARAMS, *PSURFACE_PARAMS;
 
 using KERNEL_CONFIGS = std::map<VpKernelID, void *>; // Only for legacy/non-cm kernels
@@ -93,15 +95,18 @@ using KERNEL_SURFACE_CONFIG = std::map<SurfaceType, KERNEL_SURFACE_STATE_PARAM>;
 using KERNEL_SURFACE_BINDING_INDEX = std::map<SurfaceType, std::set<uint32_t>>;
 using KERNEL_ARG_INDEX_SURFACE_MAP = std::map<uint32_t, SURFACE_PARAMS>;
 using KERNEL_STATELESS_BUFF_CONFIG = std::map<SurfaceType, uint64_t>;
+using KERNEL_BINDELESS_SURFACE = std::map<SurfaceType, std::set<uint32_t>>;
+using KERNEL_BINDELESS_SAMPLER = std::map<uint32_t, uint32_t>;
 
 typedef struct _KERNEL_PARAMS
 {
-    VpKernelID           kernelId;
-    KERNEL_ARGS          kernelArgs;
-    KERNEL_THREAD_SPACE  kernelThreadSpace;
-    bool                 syncFlag;
-    bool                 flushL1;
-    KERNEL_TUNING_PARAMS kernelTuningParams;
+    VpKernelID                   kernelId;
+    KERNEL_ARGS                  kernelArgs;
+    KERNEL_THREAD_SPACE          kernelThreadSpace;
+    bool                         syncFlag;
+    bool                         flushL1;
+    KERNEL_TUNING_PARAMS         kernelTuningParams;
+    KERNEL_ARG_INDEX_SURFACE_MAP kernelStatefulSurfaces;
 } KERNEL_PARAMS;
 
 struct MEDIA_OBJECT_KA2_INLINE_DATA
@@ -532,11 +537,37 @@ public:
 
     virtual MOS_STATUS InitRenderHalSurfaceCMF(MOS_SURFACE* src, PRENDERHAL_SURFACE renderHalSurface);
 
+    virtual MOS_STATUS SetInlineDataParameter(KRN_ARG args, RENDERHAL_INTERFACE *renderhal);
+
+    virtual MOS_STATUS UpdateBindlessSurfaceResource(SurfaceType surf, std::set<uint32_t> surfStateOffset)
+    {
+        if (surf != SurfaceTypeInvalid)
+        {
+            m_bindlessSurfaceArray.insert(std::make_pair(surf, surfStateOffset));
+        }
+
+        return MOS_STATUS_SUCCESS;
+    }
+
+    virtual std::map<uint32_t, uint32_t>& GetBindlessSamplers()
+    {
+        return m_bindlessSamperArray;
+    }
+
+    virtual MOS_STATUS InitBindlessResources()
+    {
+        m_bindlessSurfaceArray.clear();
+        m_bindlessSamperArray.clear();
+        return MOS_STATUS_SUCCESS;
+    }
+
 protected:
 
     virtual MOS_STATUS SetWalkerSetting(KERNEL_THREAD_SPACE &threadSpace, bool bSyncFlag, bool flushL1 = false);
 
     virtual MOS_STATUS SetKernelArgs(KERNEL_ARGS &kernelArgs, VP_PACKET_SHARED_CONTEXT *sharedContext);
+
+    virtual MOS_STATUS SetKernelStatefulSurfaces(KERNEL_ARG_INDEX_SURFACE_MAP &statefulSurfaces);
 
     virtual MOS_STATUS SetupSurfaceState() = 0;
 
@@ -569,6 +600,8 @@ protected:
     PVpAllocator                                            m_allocator = nullptr;
     MediaUserSettingSharedPtr                               m_userSettingPtr = nullptr;  // usersettingInstance
     KERNEL_STATELESS_BUFF_CONFIG                            m_statelessArray;
+    KERNEL_BINDELESS_SURFACE                                m_bindlessSurfaceArray;
+    KERNEL_BINDELESS_SAMPLER                                m_bindlessSamperArray;
     // kernel attribute 
     std::string                                             m_kernelName = "";
     void *                                                  m_kernelBinary = nullptr;
@@ -584,6 +617,7 @@ protected:
     bool                                                    m_useIndependentSamplerGroup = false; //true means multi kernels has their own stand alone sampler states group. only can be true when m_isAdvKernel is true.
 
     std::shared_ptr<mhw::vebox::Itf>                        m_veboxItf = nullptr;
+    std ::vector<MHW_INLINE_DATA_PARAMS>                    m_inlineDataParams = {};
 
 MEDIA_CLASS_DEFINE_END(vp__VpRenderKernelObj)
 };

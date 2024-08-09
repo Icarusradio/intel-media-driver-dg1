@@ -451,6 +451,7 @@ typedef struct _MHW_ID_ENTRY_PARAMS
     int32_t             iCrsThdConDataRdLn;             //!
     PMHW_STATE_HEAP     pGeneralStateHeap;              //! General state heap in use
     MemoryBlock         *memoryBlock;                   //! Memory block associated with the state heap
+    uint32_t            preferredSlmAllocationSize;     //! SLM Allocation Size for per SubSlice
 } MHW_ID_ENTRY_PARAMS, *PMHW_ID_ENTRY_PARAMS;
 
 typedef struct _MHW_PLANE_SETTING
@@ -698,6 +699,14 @@ typedef enum _MHW_CHROMAKEY_MODE
     MHW_CHROMAKEY_MODE_REPLACE_BLACK = 1
 } MHW_CHROMAKEY_MODE;
 
+typedef struct _MHW_INLINE_DATA_PARAMS
+{
+    uint32_t          dwOffset;
+    uint32_t          dwSize;
+    PMOS_RESOURCE     resource;
+    bool              isPtrType;
+} MHW_INLINE_DATA_PARAMS, *PMHW_INLINE_DATA_PARAMS;
+
 typedef struct _MHW_SAMPLER_STATE_UNORM_PARAM
 {
     MHW_SAMPLER_FILTER_MODE      SamplerFilterMode;
@@ -844,6 +853,7 @@ struct MHW_STATE_HEAP_SETTINGS
     HeapManager::Behavior m_dshBehavior = HeapManager::Behavior::wait;    //!< DSH behavior
 
     uint32_t        dwNumSyncTags = 0; //!< to be removed with old interfaces
+    MOS_HW_RESOURCE_DEF m_heapUsageType = MOS_CODEC_RESOURCE_USAGE_BEGIN_CODEC;
 };
 
 typedef struct _MHW_STATE_HEAP_DYNAMIC_ALLOC_PARAMS
