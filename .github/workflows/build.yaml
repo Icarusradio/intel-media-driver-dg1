@@ -1,5 +1,5 @@
 name: Build Intel Media Driver for DG1
-run-name: Build Intel Media Driver 2024Q1 Release - 24.1.5
+run-name: Build Intel Media Driver 2024Q1 Release - 24.2.5
 on:
   push:
     branches:
@@ -8,48 +8,48 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Build GmmLib 22.3.18
+    - name: Build GmmLib 22.3.20
       run: |
-        echo "Downloading GmmLib 22.3.18 ..."
-        curl -L -O https://github.com/intel/gmmlib/archive/refs/tags/intel-gmmlib-22.3.18.tar.gz
-        tar xf intel-gmmlib-22.3.18.tar.gz
-        echo "Building GmmLib 22.3.18 ..."
-        cd gmmlib-intel-gmmlib-22.3.18
+        echo "Downloading GmmLib 22.3.20 ..."
+        curl -L -O https://github.com/intel/gmmlib/archive/refs/tags/intel-gmmlib-22.3.20.tar.gz
+        tar xf intel-gmmlib-22.3.20.tar.gz
+        echo "Building GmmLib 22.3.20 ..."
+        cd gmmlib-intel-gmmlib-22.3.20
         mkdir build && cd build
         cmake -DCMAKE_BUILD_TYPE=Release ..
         make -j"$(nproc)"
-        echo "Installing GmmLib 22.3.18 ..."
+        echo "Installing GmmLib 22.3.20 ..."
         sudo make install
         
-    - name: Build Libva 2.21.0
+    - name: Build Libva 2.22.0
       run: |
-        echo "Downloading Libva 2.21.0 ..."
-        curl -L -O https://github.com/intel/libva/releases/download/2.21.0/libva-2.21.0.tar.bz2
-        tar xf libva-2.21.0.tar.bz2
-        echo "Building Libva 2.21.0 ..."
+        echo "Downloading Libva 2.22.0 ..."
+        curl -L -O https://github.com/intel/libva/releases/download/2.22.0/libva-2.22.0.tar.bz2
+        tar xf libva-2.22.0.tar.bz2
+        echo "Building Libva 2.22.0 ..."
         sudo apt-get -y install git cmake pkg-config meson libdrm-dev automake libtool
-        cd libva-2.21.0
+        cd libva-2.22.0
         sed -i '$ d' meson.build
         mkdir build
         cd build
         meson .. -Dprefix=/usr -Dlibdir=/usr/lib/x86_64-linux-gnu
         ninja
-        echo "Installing Libva 2.21.0 ..."
+        echo "Installing Libva 2.22.0 ..."
         sudo ninja install
     
-    - name: Build Intel Media Driver 24.1.5
+    - name: Build Intel Media Driver 24.2.5
       run: |
-        echo "Downloading Intel Media Driver 24.1.5 ..."
+        echo "Downloading Intel Media Driver 24.2.5 ..."
         pwd
-        curl -L -O https://github.com/intel/media-driver/archive/refs/tags/intel-media-24.1.5.tar.gz
-        tar xf intel-media-24.1.5.tar.gz
-        echo "Building Intel Media Driver 24.1.5 ..."
+        curl -L -O https://github.com/intel/media-driver/archive/refs/tags/intel-media-24.2.5.tar.gz
+        tar xf intel-media-24.2.5.tar.gz
+        echo "Building Intel Media Driver 24.2.5 ..."
         sudo apt-get -y install autoconf libtool libdrm-dev xorg xorg-dev openbox libx11-dev libgl1-mesa-glx
         mkdir -p build_media
         cd build_media
-        cmake -DENABLE_PRODUCTION_KMD=ON -DBUILD_CMRTLIB=OFF ../media-driver-intel-media-24.1.5
+        cmake -DENABLE_PRODUCTION_KMD=ON -DBUILD_CMRTLIB=OFF ../media-driver-intel-media-24.2.5
         make -j"$(nproc)"
-        echo "Installing Intel Media Driver 24.1.5 ..."
+        echo "Installing Intel Media Driver 24.2.5 ..."
         mkdir -p ../install_media
         DESTDIR="../install_media" make install
         cd ../install_media/usr/lib/x86_64-linux-gnu/dri
