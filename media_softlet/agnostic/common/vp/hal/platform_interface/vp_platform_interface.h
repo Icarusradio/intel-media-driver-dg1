@@ -460,6 +460,11 @@ public:
         return m_isOclKernelEnabled;
     }
 
+    virtual bool IsVrtEnabled()
+    {
+        return false;
+    }
+
     virtual MOS_STATUS InitVpFeatureSupportBits()
     {
         return MOS_STATUS_SUCCESS;
@@ -470,6 +475,10 @@ public:
         return m_vpFeatureSupportBits;
     }
 
+    virtual void DisableKernelPathFor3DLUTGen()
+    {
+        return;
+    }
 protected:
     PMOS_INTERFACE m_pOsInterface = nullptr;
     VP_KERNEL_BINARY m_vpKernelBinary = {};                 //!< vp kernels
