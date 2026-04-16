@@ -2327,7 +2327,7 @@ MOS_STATUS VpHdrLiteRenderFilter::PopulateHdrLiteCurbeData(
         }
 
         // Determine IEF bypass (always true for now, can be extended later)
-        bool bBypassIEF = true;
+        const bool bBypassIEF = true;
 
         // Get HDR rotation
         HDR_ROTATION HdrRotation = GetHdrRotation(rotation);
@@ -2381,13 +2381,6 @@ MOS_STATUS VpHdrLiteRenderFilter::PopulateHdrLiteCurbeData(
             curbeData.twoLayerOperation[i] = HdrTwoLayerOp;
         }
 
-        // Handle constant alpha - only set when specific blend operations are used
-        if (HdrTwoLayerOp == HDR_TWO_LAYER_OPTION_CBLEND ||
-            HdrTwoLayerOp == HDR_TWO_LAYER_OPTION_CSBLEND ||
-            HdrTwoLayerOp == HDR_TWO_LAYER_OPTION_CPBLEND)
-        {
-            curbeData.constantAlpha[i] = wAlpha;
-        }
     }
 
     // Handle destination surface configuration
