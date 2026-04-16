@@ -2891,10 +2891,11 @@ public:
 
     static bool                         m_enableAddressDump;
 
+    static MtEnable                     m_mosTraceEnable;
+
     static MOS_USER_FEATURE_VALUE       m_mosUserFeatureDescFields[__MOS_USER_FEATURE_KEY_MAX_ID];
 private:
     static const MtControlData         *m_mosTraceControlData;
-    static MtEnable                     m_mosTraceEnable;
     static MtFilter                     m_mosTraceFilter;
     static MtLevel                      m_mosTraceLevel;
     static MosMutex                     m_mutexLock;
@@ -3258,6 +3259,7 @@ do{                                                     \
 //  trace
 //------------------------------------------------------------------------------
 
+#define MOS_TraceEnabled() MosUtilities::m_mosTraceEnable
 #define MOS_TraceKeyEnabled(key) MosUtilities::TraceKeyEnabled(key)
 
 inline void MOS_TraceEvent(

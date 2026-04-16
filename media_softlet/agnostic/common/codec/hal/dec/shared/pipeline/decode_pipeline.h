@@ -519,6 +519,8 @@ protected:
     //!
     MOS_STATUS CreateSubPipeLineManager(CodechalSetting* codecSettings);
 
+    void TraceDecodeFrameInfo();
+
     //!
     //! \brief  Create sub packet manager
     //! \param  [in] codecSettings

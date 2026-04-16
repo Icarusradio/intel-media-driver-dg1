@@ -119,6 +119,7 @@ public:
         uint32_t dataOffset) = 0;
 
     virtual MOS_STATUS RegisterParams(void *settings)                    = 0;
+    virtual uint32_t   GetTraceInfo()                                    = 0;
     virtual MOS_STATUS UpdateParams(bool input)                          = 0;
     virtual MOS_STATUS SetHucPipeModeSelectParameter(bool& param)        = 0;
     virtual bool       IsStreamOutNeeded()                               = 0;

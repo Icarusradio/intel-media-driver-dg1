@@ -320,6 +320,12 @@ MOS_STATUS DecodePipeline::Prepare(void *params)
     }
     DECODE_CHK_STATUS(m_subPacketManager->Prepare());
 
+    // trace decode frame info after all update done
+    if (MOS_TraceEnabled())
+    {
+        TraceDecodeFrameInfo();
+    }
+
     DECODE_CHK_STATUS(Mos_Solo_SetGpuAppTaskEvent(m_osInterface, decodeParams->m_gpuAppTaskEvent));
 
 #if MHW_HWCMDPARSER_ENABLED
@@ -332,6 +338,41 @@ MOS_STATUS DecodePipeline::Prepare(void *params)
 #endif
 
     return MOS_STATUS_SUCCESS;
+}
+
+// Out-of-line to avoid I-cache pollution in the hot Prepare() path when tracing is disabled.
+void DecodePipeline::TraceDecodeFrameInfo()
+{
+    auto *basicFeature = dynamic_cast<DecodeBasicFeature *>(
+        m_featureManager->GetFeature(FeatureIDs::basicFeature));
+    if (basicFeature)
+    {
+        struct
+        {
+            uint32_t frameNum;       // m_frameNum
+            uint16_t width;          // m_width
+            uint16_t height;         // m_height
+            uint8_t  codecStandard;  // CODECHAL_STANDARD
+            uint8_t  bitDepth;       // m_bitDepth
+            uint8_t  chromaFormat;   // HCP_CHROMA_FORMAT_IDC
+            uint8_t  picCodingType;  // m_pictureCodingType
+            uint32_t numSlices;      // m_numSlices
+            uint32_t dataSize;       // m_dataSize
+            uint32_t cpInfo;         // extra decode info
+        } picInfo = {
+            basicFeature->m_frameNum,
+            (uint16_t)basicFeature->m_width,
+            (uint16_t)basicFeature->m_height,
+            (uint8_t)basicFeature->m_standard,
+            basicFeature->m_bitDepth,
+            (uint8_t)basicFeature->m_chromaFormat,
+            (uint8_t)basicFeature->m_pictureCodingType,
+            basicFeature->m_numSlices,
+            basicFeature->m_dataSize,
+            m_decodecp ? m_decodecp->GetTraceInfo() : 0,
+        };
+        MOS_TraceEvent(EVENT_DECODE_FRAME, EVENT_TYPE_INFO, &picInfo, sizeof(picInfo), nullptr, 0);
+    }
 }
 
 MOS_STATUS DecodePipeline::ExecuteActivePackets()

@@ -406,7 +406,8 @@ typedef enum _MEDIA_EVENT
     EVENT_HWS_NATIVE_FENCE_CMD_FLUSH,              //! event for HWS sync cmd flush
     EVENT_HWS_NATIVE_FENCE_ADD_TO_ARRAY_CMD,       //! event for Hws Native Fence Add To Array Cmd
     EVENT_HWS_NATIVE_FENCE_ADD_TO_QUEUE_API,       //! event for Hws Native Fence Add To Queue Api
-    EVENT_HWS_NATIVE_FENCE_12_WAIT                 //! event for Hws Native Fence 12 Wait
+    EVENT_HWS_NATIVE_FENCE_12_WAIT,                //! event for Hws Native Fence 12 Wait
+    EVENT_DECODE_FRAME                             //! release event for decode picture frame info
 } MEDIA_EVENT;
 
 typedef enum _MEDIA_EVENT_TYPE
