@@ -52,7 +52,6 @@ namespace decode
         MOS_ZeroMemory(&scalPars, sizeof(scalPars));
         scalPars.disableScalability = true;
         scalPars.enableVE           = MOS_VE_SUPPORTED(m_osInterface);
-        scalPars.usingSlimVdbox     = false;
         scalPars.numVdbox           = m_numVdbox;
 
         m_mediaContext->SwitchContext(VdboxDecodeFunc, &scalPars, &m_scalability);

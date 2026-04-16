@@ -246,7 +246,7 @@ MOS_STATUS EncodePipeline::GetSystemVdboxNumber()
     MOS_ZeroMemory(&mediaSysInfo, sizeof(MEDIA_ENGINE_INFO));
     MOS_STATUS eStatus = m_osInterface->pfnGetMediaEngineInfo(m_osInterface, mediaSysInfo);
 
-    if (eStatus == MOS_STATUS_SUCCESS && (!MEDIA_IS_SKU(m_skuTable, FtrWithSlimVdbox)))
+    if (eStatus == MOS_STATUS_SUCCESS)
     {
         // Both VE mode and media solo mode should be able to get the VDBOX number via the same interface
         m_numVdbox = (uint8_t)(mediaSysInfo.VDBoxInfo.NumberOfVDBoxEnabled);

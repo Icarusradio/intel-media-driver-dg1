@@ -121,7 +121,7 @@ MOS_STATUS Vp9VdencPipelineXe3_Lpm_Base::GetSystemVdboxNumber()
     MOS_ZeroMemory(&mediaSysInfo, sizeof(MEDIA_ENGINE_INFO));
     eStatus = m_osInterface->pfnGetMediaEngineInfo(m_osInterface, mediaSysInfo);
 
-    if (eStatus == MOS_STATUS_SUCCESS && (!MEDIA_IS_SKU(m_skuTable, FtrWithSlimVdbox)) && disableScalability == false)
+    if (eStatus == MOS_STATUS_SUCCESS && disableScalability == false)
     {
         m_numVdbox = (uint8_t)(mediaSysInfo.VDBoxInfo.NumberOfVDBoxEnabled);
     }

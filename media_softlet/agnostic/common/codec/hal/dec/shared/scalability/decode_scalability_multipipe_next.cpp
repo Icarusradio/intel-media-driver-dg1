@@ -168,10 +168,6 @@ MOS_STATUS DecodeScalabilityMultiPipeNext::Initialize(const MediaScalabilityOpti
     SCALABILITY_CHK_NULL_RETURN(gpuCtxCreateOption);
     gpuCtxCreateOption->LRCACount = decodeScalabilityOption->GetLRCACount();
     gpuCtxCreateOption->UsingSFC  = decodeScalabilityOption->IsUsingSFC();
-    if (decodeScalabilityOption->IsUsingSlimVdbox())
-    {
-        gpuCtxCreateOption->Flags |=  (1 << 2);
-    }
 #if (_DEBUG || _RELEASE_INTERNAL)
     if (m_osInterface->bEnableDbgOvrdInVE)
     {

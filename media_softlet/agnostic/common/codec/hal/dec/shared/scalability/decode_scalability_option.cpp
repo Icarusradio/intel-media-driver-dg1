@@ -35,7 +35,6 @@ DecodeScalabilityOption::DecodeScalabilityOption(const DecodeScalabilityOption &
     m_numPipe               = option.m_numPipe;
     m_mode                  = option.m_mode;
     m_usingSFC              = option.m_usingSFC;
-    m_usingSlimVdbox        = option.m_usingSlimVdbox;
     m_FESeparateSubmission  = option.m_FESeparateSubmission;
     m_raMode                = option.m_raMode;
     m_protectMode           = option.m_protectMode;
@@ -50,7 +49,6 @@ MOS_STATUS DecodeScalabilityOption::SetScalabilityOption(ScalabilityPars *params
     m_numPipe        = 1;
     m_mode           = scalabilitySingleMode;
     m_usingSFC       = decPars->usingSfc;
-    m_usingSlimVdbox = decPars->usingSlimVdbox;
     m_raMode         = decPars->raMode;
     m_protectMode    = decPars->protectMode;
 
@@ -108,9 +106,9 @@ MOS_STATUS DecodeScalabilityOption::SetScalabilityOption(ScalabilityPars *params
 
     SCALABILITY_VERBOSEMESSAGE(
         "Tile Column = %d, System VDBOX Num = %d, Decided Pipe Num = %d, "
-        "Using SFC = %d, Using Slim Vdbox = %d, Scalability Mode = %d, FE separate submission = %d.",
+        "Using SFC = %d, Scalability Mode = %d, FE separate submission = %d.",
         decPars->numTileColumns, decPars->numVdbox, m_numPipe,
-        m_usingSFC, m_usingSlimVdbox, m_mode, m_FESeparateSubmission);
+        m_usingSFC, m_mode, m_FESeparateSubmission);
     return MOS_STATUS_SUCCESS;
 }
 
@@ -132,7 +130,6 @@ bool DecodeScalabilityOption::IsScalabilityOptionMatched(ScalabilityPars *params
 
     if (m_numPipe              != newOption.GetNumPipe()             ||
         m_usingSFC             != newOption.IsUsingSFC()             ||
-        m_usingSlimVdbox       != newOption.IsUsingSlimVdbox()       ||
         m_mode                 != newOption.GetMode()                ||
         m_FESeparateSubmission != newOption.IsFESeparateSubmission() ||
         m_raMode               != newOption.GetRAMode()              ||
@@ -157,7 +154,6 @@ bool DecodeScalabilityOption::IsScalabilityOptionMatched(MediaScalabilityOption 
 
     if (m_numPipe              != decodeOption->GetNumPipe()             ||
         m_usingSFC             != decodeOption->IsUsingSFC()             ||
-        m_usingSlimVdbox       != decodeOption->IsUsingSlimVdbox()       ||
         m_mode                 != decodeOption->GetMode()                ||
         m_FESeparateSubmission != decodeOption->IsFESeparateSubmission() ||
         m_raMode               != decodeOption->GetRAMode()              ||

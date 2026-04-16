@@ -51,11 +51,6 @@ namespace decode
         DECODE_CHK_NULL(settings);
         DECODE_CHK_STATUS(Initialize(settings));
 
-        if (MEDIA_IS_SKU(m_skuTable, FtrWithSlimVdbox))
-        {
-            m_numVdbox = 1;
-        }
-
         m_av1DecodePkt = MOS_New(Av1DecodePktXe_Lpm_Plus_Base, this, m_task, m_hwInterface);
         DECODE_CHK_STATUS(RegisterPacket(DecodePacketId(this, av1DecodePacketId), m_av1DecodePkt));
         DECODE_CHK_STATUS(m_av1DecodePkt->Init());
@@ -79,14 +74,6 @@ namespace decode
         MOS_ZeroMemory(&scalPars, sizeof(ScalabilityPars));
         scalPars.disableRealTile = true;
         scalPars.enableVE = MOS_VE_SUPPORTED(m_osInterface);
-        if (MEDIA_IS_SKU(m_skuTable, FtrWithSlimVdbox))
-        {
-            scalPars.usingSlimVdbox = true;
-        }
-        else
-        {
-            scalPars.usingSlimVdbox = false;
-        }
         scalPars.numVdbox = m_numVdbox;
 
         if (m_allowVirtualNodeReassign)

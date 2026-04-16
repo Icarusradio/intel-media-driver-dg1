@@ -47,10 +47,6 @@ MOS_STATUS VvcPipelineXe3P_Lpm_Base::Init(void *settings)
     DECODE_CHK_NULL(settings);
     DECODE_CHK_STATUS(Initialize(settings));
 
-    if (MEDIA_IS_SKU(m_skuTable, FtrWithSlimVdbox))
-    {
-        m_numVdbox = 1;
-    }
     if (m_basicFeature->m_shortFormatInUse)
     {
         HucPacketCreator *hucPktCreator = dynamic_cast<HucPacketCreator *>(this);

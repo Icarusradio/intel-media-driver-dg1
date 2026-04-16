@@ -627,7 +627,7 @@ static bool InitPvcMediaSku(struct GfxDeviceInfo *devInfo,
         MEDIA_WR_SKU(skuTable, FtrE2ECompression, 0);
     }
 
-    MEDIA_WR_SKU(skuTable, FtrWithSlimVdbox, 1);
+    MEDIA_WR_SKU(skuTable, FtrWithSlimVdbox, 0);
 
     // Enable LocalMemory for all dGraphics
     MEDIA_WR_SKU(skuTable, FtrLocalMemory, 1);
