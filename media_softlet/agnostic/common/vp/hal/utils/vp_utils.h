@@ -332,7 +332,8 @@ protected:
 #define __VPHAL_HDR_H2S_RGB_TM                                          "VPHAL H2S TM RGB Based"
 #define __VPHAL_HDR_3DLUT_CPU_PATH                                      "HDR 3DLut Table Use CPU Caculate"
 #define __VPHAL_FORCE_VP_3DLUT_KERNEL_ONLY                              "Force VP 3DLut Kernel Only"
-#define __VPHAL_3DLUT_FILE_PATH                                         "3DLUT File Path"
+#define __VPHAL_ENABLE_TEXTURE_3DLUT                                     "Enable Texture 3DLut"
+#define __VPHAL_3DLUT_LAYOUT_CONVERTED                                  "3DLut layout converted"
 
 // Compression
 #define __VPHAL_MMC_ENABLE                                              "VP MMC In Use"

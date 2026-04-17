@@ -318,10 +318,16 @@ MOS_STATUS VpUserSetting::InitVpUserSetting(MediaUserSettingSharedPtr userSettin
             true);
         DeclareUserSettingKey(
             userSettingPtr,
-            __VPHAL_3DLUT_FILE_PATH,
+            __VPHAL_ENABLE_TEXTURE_3DLUT,
             MediaUserSetting::Group::Sequence,
-            "",     // Empty string as default (feature disabled)
-            true);  // Is report key
+            0,
+            true);
+        DeclareUserSettingKey(
+            userSettingPtr,
+            __VPHAL_3DLUT_LAYOUT_CONVERTED,
+            MediaUserSetting::Group::Sequence,
+            0,
+            true);
 #endif
     }
 
