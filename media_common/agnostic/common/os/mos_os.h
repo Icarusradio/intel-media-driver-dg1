@@ -266,7 +266,7 @@ typedef struct _MOS_COMMAND_BUFFER
 {
     MOS_RESOURCE        OsResource;                 //!< OS Resource
     PMHW_BATCH_BUFFER   syncMhwBatchBuffer;         //!< Pointer to sync mhw batch buffer
-    bool                bNativeFenceSyncBBAdded;     //!< True after native fence MI_BATCH_BUFFER_START has been emitted
+    bool                bNativeFenceSyncBBAdded;    //!< True after native fence MI_BATCH_BUFFER_START has been emitted
 
     // Common fields
     uint32_t            *pCmdBase;                   //!< Base    address (CPU)
