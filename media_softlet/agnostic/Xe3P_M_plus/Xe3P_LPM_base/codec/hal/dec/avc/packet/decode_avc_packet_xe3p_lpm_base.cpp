@@ -121,9 +121,9 @@ MOS_STATUS AvcDecodePktXe3P_Lpm_Base::PackPictureLevelCmds(MOS_COMMAND_BUFFER &c
     if (bypassHW)
     {
         m_bypassHwLegacyEnabled = true;
-        // AVC codecSettings->chromaFormat = 0 means default 4:2:0 (not MONOCHROME).
-        // Normalize to HCP_CHROMA_FORMAT_YUV420 (= 1) so cfg file "420" entries match.
-        uint32_t avcChromaFmt = m_avcBasicFeature->m_chromaFormat == 0 ? 1 : m_avcBasicFeature->m_chromaFormat;
+        // AVC decode DDI never sets codecSettings->chromaFormat (always 0).
+        // Use picParams->seq_fields.chroma_format_idc from bitstream SPS instead.
+        uint32_t avcChromaFmt = m_avcBasicFeature->m_avcPicParams->seq_fields.chroma_format_idc ? m_avcBasicFeature->m_avcPicParams->seq_fields.chroma_format_idc : 1;
         // AVC DDI only exposes MB-aligned dimensions (pic_*_in_mbs_minus1); display crop
         // info is not passed through. Config file entries for AVC must use MB-aligned
         // height (e.g. 1088 for 1080p, not 1080). AVC encode uses the same convention.
