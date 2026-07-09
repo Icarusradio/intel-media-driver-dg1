@@ -426,8 +426,8 @@ protected:
 
 #define __MEDIA_USER_FEATURE_VALUE_ENABLE_VESFC_LINEAR_OUTPUT_BY_TILECONVERT "Enable VESFC Linearoutput By TileConvert"
 
-#define  __MEDIA_USER_FEATURE_VALUE_ENABLE_VEBOX_ID_REPORT              "Enable VEBOX ID REPORT"
-#define  __MEDIA_USER_FEATURE_VALUE_USED_VEBOX_ID                       "USED VEBOX ID"
+#define  __MEDIA_USER_FEATURE_VALUE_ENABLE_VEBOX_ID_REPORT              "Enable VEBOX ID Report"
+#define  __MEDIA_USER_FEATURE_VALUE_USED_VEBOX_ID                       "Used VEBOX ID"
 #define __MEDIA_USER_FEATURE_VALUE_FALLBACK_SCALING_TO_RENDER_8K        "VP Fallback Scaling To Render 8k"
 #define __MEDIA_USER_FEATURE_VALUE_FALLBACK_SCALING_TO_RENDER_8K_REPORT "VP Fallback Scaling To Render 8k Report"
 #endif  //(_DEBUG || _RELEASE_INTERNAL)
