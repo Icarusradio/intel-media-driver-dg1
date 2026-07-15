@@ -58,6 +58,7 @@ MOS_STATUS Av1VdencPipelineXe3P_Lpm_Base::Init(void *settings)
     if (m_preEncEnabled)
     {
         EncodePreEncPacket* av1PreEncPkt = MOS_New(EncodePreEncPacket, this, task, m_hwInterface);
+        ENCODE_CHK_NULL_RETURN(av1PreEncPkt);
         ENCODE_CHK_STATUS_RETURN(RegisterPacket(encodePreEncPacket, av1PreEncPkt));
         ENCODE_CHK_STATUS_RETURN(av1PreEncPkt->Init());
 #if USE_CODECHAL_DEBUG_TOOL
@@ -70,27 +71,34 @@ MOS_STATUS Av1VdencPipelineXe3P_Lpm_Base::Init(void *settings)
 #endif
     }
 
+    ENCODE_CHK_STATUS_RETURN(RegisterKernelPackets(task));
+
 #if defined(_MEDIA_RESERVED)
     Av1VdencPktXe3P_Lpm_Base *av1Vdencpkt = MOS_New(Av1VdencPktXe3P_Lpm_BaseExt, this, task, m_hwInterface);
 #else
     Av1VdencPktXe3P_Lpm_Base *av1Vdencpkt = MOS_New(Av1VdencPktXe3P_Lpm_Base, this, task, m_hwInterface);
 #endif
+    ENCODE_CHK_NULL_RETURN(av1Vdencpkt);
     ENCODE_CHK_STATUS_RETURN(RegisterPacket(Av1VdencPacket, av1Vdencpkt));
     ENCODE_CHK_STATUS_RETURN(av1Vdencpkt->Init());
 
     Av1BrcInitPkt *brcInitpkt = MOS_New(Av1BrcInitPktXe3p_Lpm_Base, this, task, m_hwInterface);
+    ENCODE_CHK_NULL_RETURN(brcInitpkt);
     ENCODE_CHK_STATUS_RETURN(RegisterPacket(Av1HucBrcInit, brcInitpkt));
     ENCODE_CHK_STATUS_RETURN(brcInitpkt->Init());
     Av1BrcUpdatePkt *brcUpdatepkt = MOS_New(Av1BrcUpdatePktXe3p_Lpm_Base, this, task, m_hwInterface);
+    ENCODE_CHK_NULL_RETURN(brcUpdatepkt);
     ENCODE_CHK_STATUS_RETURN(RegisterPacket(Av1HucBrcUpdate, brcUpdatepkt));
     ENCODE_CHK_STATUS_RETURN(brcUpdatepkt->Init());
 
     // Register HucSLBBUpdate packet
     AV1HucSLBBUpdatePkt *slbbUpdatePkt = MOS_New(AV1HucSLBBUpdatePkt, this, task, m_hwInterface);
+    ENCODE_CHK_NULL_RETURN(slbbUpdatePkt);
     ENCODE_CHK_STATUS_RETURN(RegisterPacket(HucSLBBUpdate, slbbUpdatePkt));
     ENCODE_CHK_STATUS_RETURN(slbbUpdatePkt->Init());
 
     Av1BackAnnotationPkt *av1BackAnnotationpkt = MOS_New(Av1BackAnnotationPkt, this, task, m_hwInterface);
+    ENCODE_CHK_NULL_RETURN(av1BackAnnotationpkt);
     ENCODE_CHK_STATUS_RETURN(RegisterPacket(Av1BackAnnotation, av1BackAnnotationpkt));
     ENCODE_CHK_STATUS_RETURN(av1BackAnnotationpkt->Init());
 
@@ -165,7 +173,7 @@ MOS_STATUS Av1VdencPipelineXe3P_Lpm_Base::ActivateVdencVideoPackets()
     {
         ENCODE_CHK_STATUS_RETURN(ActivatePacket(encodePreEncPacket, immediateSubmit, 0, 0));
 #if USE_CODECHAL_DEBUG_TOOL
-        uint32_t encodeMode = 0; 
+        uint32_t encodeMode = 0;
         RUN_FEATURE_INTERFACE_RETURN(Av1VdencPreEnc, Av1FeatureIDs::preEncFeature, GetEncodeMode, encodeMode);
         if (encodeMode == MediaEncodeMode::MANUAL_RES_PRE_ENC || encodeMode == MediaEncodeMode::AUTO_RES_PRE_ENC)
         {
@@ -175,8 +183,10 @@ MOS_STATUS Av1VdencPipelineXe3P_Lpm_Base::ActivateVdencVideoPackets()
 #endif
     }
 
-    // Activate HucSLBBUpdate packet after PreEnc and before BrcInit
+    // Activate HucSLBBUpdate packet after PreEnc and before the kernel packets/BrcInit
     ENCODE_CHK_STATUS_RETURN(ActivatePacket(HucSLBBUpdate, immediateSubmit, 0, 0));
+
+    ENCODE_CHK_STATUS_RETURN(ActivateKernelPackets(basicFeature));
 
     if (brcFeature->IsBRCInitRequired())
     {
@@ -189,6 +199,8 @@ MOS_STATUS Av1VdencPipelineXe3P_Lpm_Base::ActivateVdencVideoPackets()
         {
             ENCODE_CHK_STATUS_RETURN(ActivatePacket(Av1HucBrcUpdate, immediateSubmit, curPass, 0));
         }
+
+        ENCODE_CHK_STATUS_RETURN(ActivateFilterPacket(curPass, basicFeature));
 
         for (uint8_t curPipe = 0; curPipe < GetPipeNum(); curPipe++)
         {

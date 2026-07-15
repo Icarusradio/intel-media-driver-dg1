@@ -130,6 +130,18 @@ enum AV1_BRC_FRAME_TYPE
             return &m_vdenc2ndLevelBatchBuffer[currRecycledBufIdx];
         };
 
+        //! \brief  Byte offset of VDENC_CMD2 in the SLBB, computed from static HW-init command
+        //!         sizes so it is valid before the SLBB-update packet runs (unlike the runtime
+        //!         Av1BasicFeature::SlbData offsets, which the SLBB-update packet fills too late
+        //!         for the TF feature Update phase). Mirrors the layout built by
+        //!         AV1HucSLBBUpdatePkt: Group1 = numSeg x AVP_SEGMENT_STATE + AVP_INLOOP_FILTER_STATE
+        //!         + BB_END, Group2 = VDENC_CMD1 + BB_END, then VDENC_CMD2. TF reads the BRC QP at
+        //!         this offset + DW27 + 1 (VDENC_CMD2.QpPrimeYAc).
+        //! \param  [in] numSeg
+        //!         Number of AVP_SEGMENT_STATE commands the SLBB emits
+        //!         (segmentation enabled ? SegmentNumber : 1).
+        uint32_t GetSlbbCmd2StartOffset(uint32_t numSeg) const;
+
         PMHW_BATCH_BUFFER GetPakInsertOutputBatchBuffer(uint32_t currRecycledBufIdx)
         {
             return &m_pakInsertOutputBatchBuffer[currRecycledBufIdx];

@@ -39,7 +39,8 @@ public:
                      TrackedBuffer                  *trackedBuf,
                      RecycleResource                *recycleBuf,
                      void                           *constSettings) :
-                     Av1BasicFeature(allocator, hwInterface, trackedBuf, recycleBuf, constSettings){m_featureManager = featureManager; };
+                     Av1BasicFeature(featureManager, allocator, hwInterface, trackedBuf, recycleBuf, constSettings)
+                     {};
 
     virtual ~Av1BasicFeatureXe3_Lpm_Base(){};
 
@@ -56,6 +57,7 @@ public:
     MHW_SETPAR_DECL_HDR(VDENC_PIPE_MODE_SELECT);
 
     MHW_SETPAR_DECL_HDR(AVP_INLOOP_FILTER_STATE);
+
 
 MEDIA_CLASS_DEFINE_END(encode__Av1BasicFeatureXe3_Lpm_Base)
 };

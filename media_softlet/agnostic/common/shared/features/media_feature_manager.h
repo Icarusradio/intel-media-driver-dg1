@@ -69,6 +69,7 @@ struct FeatureIDs
         encodeTile,
         preEncFeature,
         saliencyFeature,
+        tfFeature,
     };
 };
 //!

@@ -901,6 +901,8 @@ MOS_STATUS EncodePreEncConstSettings::SetVdencCmd2Settings()
 
                     static const uint32_t dw54Lut = 0x44000000;
                     data[54] |= dw54Lut;
+                    if (preEncConfig.generalPurposeME)
+                        data[54] |= 0x10;
                 
                     return MOS_STATUS_SUCCESS;
                 });

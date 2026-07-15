@@ -119,6 +119,8 @@ struct EncoderParams
     PMOS_RESOURCE                   presMetadataBuffer      = nullptr;                      //!< Output buffer for meta data.
     PMOS_RESOURCE                   presMbCodeSurface       = nullptr;                      //!< PAK objects provided by framework.
     PMOS_SURFACE                    psMbSegmentMapSurface   = nullptr;                      //!< [VP9]
+    PMOS_SURFACE                    psTFL0Surface[4]      = {nullptr, nullptr, nullptr, nullptr};  //!< [AV1 TF] up to 4 past refs
+    PMOS_SURFACE                    psTFL1Surface[6]      = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};  //!< [AV1 TF] up to 6 future refs
     /* \brief [AVC & MPEG2] MB QP data provided by framework.
     *
     *    When in CQP mode, the framework can provide this surface that contains a single QpY value for each macroblock to be used for encoding. If it is not provided, the frame level QpY(QpY + slice_qp_delta) will be used for all macroblocks.
@@ -174,6 +176,8 @@ struct EncoderParams
     uint32_t                        uiFrameRate                     = 0;
 
     bool                            bSegmentMapProvided             = false;                    //!< [VP9]
+    uint8_t                         uiTFL0RefCount                = 0;
+    uint8_t                         uiTFL1RefCount                = 0;
 
     void                            *pMpeg2UserDataListHead         = nullptr;                  //!< [MPEG2]
 

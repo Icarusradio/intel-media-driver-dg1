@@ -83,12 +83,17 @@ struct SlbData
 class Av1BasicFeature : public EncodeBasicFeature, public mhw::vdbox::vdenc::Itf::ParSetting, public mhw::vdbox::avp::Itf::ParSetting, public mhw::vdbox::huc::Itf::ParSetting, public mhw::mi::Itf::ParSetting
 {
 public:
-    Av1BasicFeature(EncodeAllocator * allocator,
-                     CodechalHwInterfaceNext *hwInterface,
-                     TrackedBuffer *trackedBuf,
-                     RecycleResource *recycleBuf,
-                     void *constSettings) :
-                     EncodeBasicFeature(allocator, hwInterface, trackedBuf, recycleBuf){m_constSettings = constSettings;};
+    Av1BasicFeature(MediaFeatureManager *featureManager,
+                    EncodeAllocator *allocator,
+                    CodechalHwInterfaceNext *hwInterface,
+                    TrackedBuffer *trackedBuf,
+                    RecycleResource *recycleBuf,
+                    void *constSettings) :
+                    EncodeBasicFeature(allocator, hwInterface, trackedBuf, recycleBuf)
+    {
+        m_constSettings = constSettings;
+        m_featureManager = featureManager;
+    };
 
     virtual ~Av1BasicFeature() {};
 
@@ -256,7 +261,7 @@ protected:
     uint32_t m_appHdrSize                = 0;
     uint32_t m_appHdrSizeExcludeFrameHdr = 0;
 
-MEDIA_CLASS_DEFINE_END(encode__Av1BasicFeature)
+    MEDIA_CLASS_DEFINE_END(encode__Av1BasicFeature)
 };
 
 }  // namespace encode

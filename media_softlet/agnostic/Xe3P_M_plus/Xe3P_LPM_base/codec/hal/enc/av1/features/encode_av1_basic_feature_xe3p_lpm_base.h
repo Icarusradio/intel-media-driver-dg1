@@ -40,7 +40,8 @@ public:
                      TrackedBuffer                  *trackedBuf,
                      RecycleResource                *recycleBuf,
                      void                           *constSettings) :
-                     Av1BasicFeature(allocator, hwInterface, trackedBuf, recycleBuf, constSettings){ m_featureManager = featureManager; m_hwInterface = hwInterface;};
+                     Av1BasicFeature(featureManager, allocator, hwInterface, trackedBuf, recycleBuf, constSettings)
+                     { m_hwInterface = hwInterface; };
 
     virtual ~Av1BasicFeatureXe3P_Lpm_Base();
 

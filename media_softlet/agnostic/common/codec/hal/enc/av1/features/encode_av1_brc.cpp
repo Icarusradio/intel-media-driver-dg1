@@ -165,6 +165,35 @@ namespace encode
         return MOS_STATUS_SUCCESS;
     }
 
+    uint32_t Av1Brc::GetSlbbCmd2StartOffset(uint32_t numSeg) const
+    {
+        if (m_hwInterface == nullptr)
+        {
+            return 0;
+        }
+
+        auto avpItf   = std::static_pointer_cast<mhw::vdbox::avp::Itf>(m_hwInterface->GetAvpInterfaceNext());
+        auto vdencItf = std::static_pointer_cast<mhw::vdbox::vdenc::Itf>(m_hwInterface->GetVdencInterfaceNext());
+        auto miItf    = std::static_pointer_cast<mhw::mi::Itf>(m_hwInterface->GetMiInterfaceNext());
+
+        if (!avpItf || !vdencItf || !miItf)
+        {
+            return 0;
+        }
+
+        const uint32_t bbEnd = miItf->MHW_GETSIZE_F(MI_BATCH_BUFFER_END)();
+
+        // SLBB layout up to VDENC_CMD2 (all sizes in bytes, no inter-group cacheline padding):
+        //   Group1: numSeg x AVP_SEGMENT_STATE + AVP_INLOOP_FILTER_STATE + BB_END
+        //   Group2: VDENC_CMD1 + BB_END
+        //   Group3: VDENC_CMD2  <-- start returned here
+        return numSeg * avpItf->MHW_GETSIZE_F(AVP_SEGMENT_STATE)()
+             +          avpItf->MHW_GETSIZE_F(AVP_INLOOP_FILTER_STATE)()
+             +          bbEnd
+             +          vdencItf->MHW_GETSIZE_F(VDENC_CMD1)()
+             +          bbEnd;
+    }
+
     inline uint8_t MapTCBRCScenarioInfo(ENCODE_SCENARIO& scenarioInfo)
     {
         uint8_t TCBRCScenarioInfo = 0;

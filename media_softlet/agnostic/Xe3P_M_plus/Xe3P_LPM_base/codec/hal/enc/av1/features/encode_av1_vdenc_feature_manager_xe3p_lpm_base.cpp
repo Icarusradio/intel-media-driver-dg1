@@ -40,7 +40,11 @@
 #if _MEDIA_RESERVED
 #include "encode_av1_feature_xe3p_lpm_base_ext.h"
 #endif
+#if _KERNEL_RESERVED
+#include "encode_av1_tf_xe3p_lpm.h"
+#endif
 
+#include <vector>
 namespace encode
 {
 
@@ -55,43 +59,67 @@ MOS_STATUS EncodeAv1VdencFeatureManagerXe3P_Lpm_Base::CreateFeatures(void *const
 {
     ENCODE_FUNC_CALL();
 
+    // Returns a fresh packet-id list for the standard features. RegisterFeatures takes
+    // the list by rvalue reference, so a new vector is produced on each call. When the
+    // kernel-pipeline packets exist, the standard features also attach to that range so
+    // their per-packet setup runs for those packets.
+    auto stdPkts = []() -> std::vector<int> {
+#if _KERNEL_RESERVED
+        std::vector<int> result;
+        for (int i = Av1Pipeline::encodePreEncPacket; i <= Av1Pipeline::mePacket; ++i)
+        {
+            result.push_back(i);
+        }
+        return result;
+#else
+        return {Av1Pipeline::encodePreEncPacket};
+#endif
+    };
+
     Av1SuperRes *superRes = MOS_New(Av1SuperRes, this, m_allocator, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1SuperRes, superRes, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1SuperRes, superRes, stdPkts()));
 
     EncodeBasicFeature *encBasic = MOS_New(Av1BasicFeatureXe3P_Lpm_Base, this, m_allocator, m_hwInterface, m_trackedBuf, m_recycleResource, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::basicFeature, encBasic, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::basicFeature, encBasic, stdPkts()));
 
     Av1EncodeTile_Xe3P_Lpm_Base *encTile = MOS_New(Av1EncodeTile_Xe3P_Lpm_Base, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::encodeTile, encTile, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::encodeTile, encTile, stdPkts()));
 
     Av1Segmentation *encSegmentation = MOS_New(Av1Segmentation, this, m_allocator, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1Segmentation, encSegmentation, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1Segmentation, encSegmentation, stdPkts()));
 
     Av1Brc *encBrc = MOS_New(Av1Brc, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1BrcFeature, encBrc, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1BrcFeature, encBrc, stdPkts()));
 
     Av1Scc *encSCC = MOS_New(Av1Scc, m_allocator, m_hwInterface, constSettings, this);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1Scc, encSCC, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1Scc, encSCC, stdPkts()));
 
     Av1EncodeAqm *encAqm = MOS_New(Av1EncodeAqm, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1Aqm, encAqm, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1Aqm, encAqm, stdPkts()));
 
 #if _MEDIA_RESERVED
     Av1ReservedFeature2_Xe3P_Lpm_Base *av1ReservedFeature2 = MOS_New(Av1ReservedFeature2_Xe3P_Lpm_Base, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1ReservedFeatureID3, av1ReservedFeature2, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1ReservedFeatureID3, av1ReservedFeature2, stdPkts()));
 #endif
 
     Av1FastPass *encFastPass = MOS_New(Av1FastPass, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1FastPass, encFastPass, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1FastPass, encFastPass, stdPkts()));
 
     Av1VdencPreEnc* av1Preenc = MOS_New(Av1VdencPreEnc, this, m_allocator, m_hwInterface, m_trackedBuf, m_recycleResource, constSettings);
     ENCODE_CHK_STATUS_RETURN(RegisterFeatures(FeatureIDs::preEncFeature, av1Preenc, { Av1Pipeline::encodePreEncPacket }, LIST_TYPE::ALLOW_LIST));
 
     Av1VdencFullEnc* av1Fullenc = MOS_New(Av1VdencFullEnc, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1FullEncFeature, av1Fullenc, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1FullEncFeature, av1Fullenc, stdPkts()));
 
     AV1VdencLplaEnc* lplaEnc = MOS_New(AV1VdencLplaEnc, this, m_allocator, m_hwInterface, constSettings);
-    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1LplaEncFeature, lplaEnc, { Av1Pipeline::encodePreEncPacket }));
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(Av1FeatureIDs::av1LplaEncFeature, lplaEnc, stdPkts()));
+
+#if _KERNEL_RESERVED
+    Av1TfFeature *tf = MOS_New(Av1TfFeatureXe3pLpm, this, m_allocator, m_hwInterface, m_trackedBuf, m_recycleResource);
+    ENCODE_CHK_STATUS_RETURN(RegisterFeatures(FeatureIDs::tfFeature, tf,
+                            {Av1Pipeline::hmeDsPacket, Av1Pipeline::mePacket},
+                            LIST_TYPE::ALLOW_LIST));
+#endif
 
     return MOS_STATUS_SUCCESS;
 }

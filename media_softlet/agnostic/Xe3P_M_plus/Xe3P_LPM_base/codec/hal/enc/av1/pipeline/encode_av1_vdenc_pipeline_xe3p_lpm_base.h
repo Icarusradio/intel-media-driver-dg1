@@ -31,6 +31,8 @@
 
 namespace encode
 {
+class Av1BasicFeature;
+
 class Av1VdencPipelineXe3P_Lpm_Base : public Av1VdencPipeline
 {
 public:
@@ -55,6 +57,25 @@ protected:
     std::shared_ptr<MediaSfcInterface> m_sfcItf = nullptr;
     virtual MOS_STATUS CreateFeatureManager() override;
     virtual MOS_STATUS ActivateVdencVideoPackets() override;
+
+    //!
+    //! \brief  Extension hook: register the pre-encode kernel packets during Init.
+    //!         Default is a no-op; a derived extension class supplies the packets.
+    //!
+    virtual MOS_STATUS RegisterKernelPackets(MediaTask *task) { return MOS_STATUS_SUCCESS; }
+
+    //!
+    //! \brief  Extension hook: activate the pre-encode kernel packets (downscale /
+    //!         motion-estimation / motion-compensation) before BRC init.
+    //!         Default is a no-op; a derived extension class supplies the sequence.
+    //!
+    virtual MOS_STATUS ActivateKernelPackets(Av1BasicFeature *basicFeature) { return MOS_STATUS_SUCCESS; }
+
+    //!
+    //! \brief  Extension hook: activate the per-pass filter packet inside the pass loop.
+    //!         Default is a no-op; a derived extension class supplies the packet.
+    //!
+    virtual MOS_STATUS ActivateFilterPacket(uint8_t curPass, Av1BasicFeature *basicFeature) { return MOS_STATUS_SUCCESS; }
 
 MEDIA_CLASS_DEFINE_END(encode__Av1VdencPipelineXe3P_Lpm_Base)
 };

@@ -29,7 +29,9 @@
 #include "encode_allocator.h"
 #include "encode_av1_vdenc_const_settings.h"
 #include "mos_solo_generic.h"
-
+#if _KERNEL_RESERVED
+#include "encode_av1_tf.h"
+#endif
 namespace encode
 {
 MOS_STATUS Av1BasicFeature::Init(void *setting)
@@ -243,6 +245,22 @@ MOS_STATUS Av1BasicFeature::Update(void *params)
     ENCODE_CHK_STATUS_RETURN(UpdateDefaultCdfTable());
 
     ENCODE_CHK_STATUS_RETURN(GetTrackedBuffers());
+
+#if _KERNEL_RESERVED
+    // TF (Temporal Filter)
+    if (encodeParams->uiTFL0RefCount || encodeParams->uiTFL1RefCount)
+    {
+        // In this case, TF Process will run
+        ENCODE_CHK_NULL_RETURN(m_featureManager);
+        auto tfFeature = dynamic_cast<TfFeature *>(m_featureManager->GetFeature(FeatureIDs::tfFeature));
+        if (tfFeature)
+        {
+            m_rawSurfaceToEnc =
+                m_rawSurfaceToPak = tfFeature->m_presFiltered;
+        }
+    }
+#endif
+    
 
     return MOS_STATUS_SUCCESS;
 }

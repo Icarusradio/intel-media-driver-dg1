@@ -26,12 +26,19 @@
 
 #include "encode_av1_vdenc_pipeline_adapter_xe3p_lpm.h"
 #include "encode_utils.h"
+#if defined(_MEDIA_RESERVED)
+#include "encode_av1_vdenc_pipeline_xe3p_lpm_base_ext.h"
+#endif
 
 MOS_STATUS EncodeAv1VdencPipelineAdapterXe3P_Lpm::Allocate(CodechalSetting *codecHalSettings)
 {
     ENCODE_FUNC_CALL();
 
+#if defined(_MEDIA_RESERVED)
+    m_encoder = std::make_shared<encode::Av1VdencPipelineXe3P_Lpm_BaseExt>(m_hwInterface, m_debugInterface);
+#else
     m_encoder = std::make_shared<encode::Av1VdencPipelineXe3P_Lpm_Base>(m_hwInterface, m_debugInterface);
+#endif
     ENCODE_CHK_NULL_RETURN(m_encoder);
 
     return m_encoder->Init(codecHalSettings);

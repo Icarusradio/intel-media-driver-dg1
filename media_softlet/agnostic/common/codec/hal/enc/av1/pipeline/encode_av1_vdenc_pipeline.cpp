@@ -106,6 +106,7 @@ MOS_STATUS Av1VdencPipeline::Prepare(void *params)
         return MOS_STATUS_INVALID_PARAMETER;
     }
 
+    ENCODE_CHK_NULL_RETURN(m_featureManager);
     auto feature = dynamic_cast<Av1BasicFeature *>(m_featureManager->GetFeature(Av1FeatureIDs::basicFeature));
     ENCODE_CHK_NULL_RETURN(feature);
     feature->m_dualEncEnable = m_dualEncEnable;
