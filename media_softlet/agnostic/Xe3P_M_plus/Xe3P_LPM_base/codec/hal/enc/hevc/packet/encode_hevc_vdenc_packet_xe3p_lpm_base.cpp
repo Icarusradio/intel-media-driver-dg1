@@ -65,7 +65,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::AddPicStateWithNoTile(
     ENCODE_CHK_NULL_RETURN(vdenc2ndLevelBatchBuffer);
     vdenc2ndLevelBatchBuffer->dwOffset = m_hwInterface->m_vdencBatchBuffer1stGroupSize;
 
-    ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, vdenc2ndLevelBatchBuffer));
+    if (!m_osInterface->bNullHwIsEnabled)
+    {
+        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, vdenc2ndLevelBatchBuffer));
+    }
     HalOcaInterfaceNext::OnSubLevelBBStart(
         cmdBuffer,
         m_osInterface->pOsContext,
@@ -125,7 +128,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::AddPicStateWithTile(
     ENCODE_CHK_NULL_RETURN(vdenc2ndLevelBatchBuffer);
     vdenc2ndLevelBatchBuffer->dwOffset = m_hwInterface->m_vdencBatchBuffer1stGroupSize;
 
-    ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, vdenc2ndLevelBatchBuffer));
+    if (!m_osInterface->bNullHwIsEnabled)
+    {
+        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, vdenc2ndLevelBatchBuffer));
+    }
     HalOcaInterfaceNext::OnSubLevelBBStart(
         cmdBuffer,
         m_osInterface->pOsContext,
@@ -186,7 +192,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::AddOneTileCommands(
 
         // Add batch buffer start for tile
         RUN_FEATURE_INTERFACE_RETURN(HevcEncodeTile, HevcFeatureIDs::encodeTile, GetTileLevelBatchBuffer, tileLevelBatchBuffer);
-        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, tileLevelBatchBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, tileLevelBatchBuffer));
+        }
 
         tempCmdBuffer = &constructTileBatchBuf;
         MHW_MI_MMIOREGISTERS mmioRegister;
@@ -216,11 +225,17 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::AddOneTileCommands(
     auto &mfxWaitParams                 = m_miItf->MHW_GETPAR_F(MFX_WAIT)();
     mfxWaitParams                       = {};
     mfxWaitParams.iStallVdboxPipeline   = true;
-    ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(tempCmdBuffer));
+    if (!m_osInterface->bNullHwIsEnabled)
+    {
+        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(tempCmdBuffer));
+    }
     SETPAR_AND_ADDCMD(HCP_PIPE_MODE_SELECT, m_hcpItf, tempCmdBuffer);
     mfxWaitParams                       = {};
     mfxWaitParams.iStallVdboxPipeline   = true;
-    ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(tempCmdBuffer));
+    if (!m_osInterface->bNullHwIsEnabled)
+    {
+        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(tempCmdBuffer));
+    }
 
     ENCODE_CHK_STATUS_RETURN(AddPicStateWithTile(*tempCmdBuffer));
 
@@ -249,7 +264,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::AddOneTileCommands(
         ENCODE_CHK_NULL_RETURN(tileLevelBatchBuffer);
         tileLevelBatchBuffer->iCurrent   = tempCmdBuffer->iOffset;
         tileLevelBatchBuffer->iRemaining = tempCmdBuffer->iRemaining;
-        ENCODE_CHK_STATUS_RETURN(m_miItf->AddMiBatchBufferEnd(nullptr, tileLevelBatchBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->AddMiBatchBufferEnd(nullptr, tileLevelBatchBuffer));
+        }
         HalOcaInterfaceNext::OnSubLevelBBStart(
             cmdBuffer,
             m_osInterface->pOsContext,
@@ -308,7 +326,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::SendHwSliceEncodeCommand(const PCODEC_ENCO
 
             RUN_FEATURE_INTERFACE_RETURN(HEVCEncodeBRC, HevcFeatureIDs::hevcBrcFeature, SetVdencBatchBufferState, m_pipeline->m_currRecycledBufIdx, currSlcIdx, vdencBatchBuffer, vdencHucInUse);
             PMHW_BATCH_BUFFER secondLevelBatchBufferUsed = vdencBatchBuffer;
-            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START(&cmdBuffer, secondLevelBatchBufferUsed)));
+            if (!m_osInterface->bNullHwIsEnabled)
+            {
+                ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START(&cmdBuffer, secondLevelBatchBufferUsed)));
+            }
             HalOcaInterfaceNext::OnSubLevelBBStart(
                 cmdBuffer,
                 m_osInterface->pOsContext,
@@ -318,7 +339,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::SendHwSliceEncodeCommand(const PCODEC_ENCO
                 m_basicFeature->m_vdencBatchBufferPerSlicePart2Start[currSlcIdx] - secondLevelBatchBufferUsed->dwOffset);
             ENCODE_CHK_STATUS_RETURN(AddAllCmds_HCP_PAK_INSERT_OBJECT_BRC(&cmdBuffer));
             secondLevelBatchBufferUsed->dwOffset = m_basicFeature->m_vdencBatchBufferPerSlicePart2Start[currSlcIdx];
-            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START(&cmdBuffer, secondLevelBatchBufferUsed)));
+            if (!m_osInterface->bNullHwIsEnabled)
+            {
+                ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START(&cmdBuffer, secondLevelBatchBufferUsed)));
+            }
             HalOcaInterfaceNext::OnSubLevelBBStart(
                 cmdBuffer,
                 m_osInterface->pOsContext,
@@ -332,7 +356,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::SendHwSliceEncodeCommand(const PCODEC_ENCO
             PMHW_BATCH_BUFFER slbbBuffer = basicFeatureXe3pLpm->GetVdenc2ndLevelBatchBuffer(m_pipeline->m_currRecycledBufIdx);
             ENCODE_CHK_NULL_RETURN(slbbBuffer);
             slbbBuffer->dwOffset = m_basicFeature->m_vdencBatchBufferTileSliceStart[currSlcIdx];
-            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, slbbBuffer));
+            if (!m_osInterface->bNullHwIsEnabled)
+            {
+                ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, slbbBuffer));
+            }
 
             SETPAR_AND_ADDCMD(VDENC_WALKER_STATE, m_vdencItf, &cmdBuffer);
         }
@@ -355,7 +382,10 @@ MOS_STATUS HevcVdencPktXe3P_Lpm_Base::SendHwSliceEncodeCommand(const PCODEC_ENCO
         PMHW_BATCH_BUFFER slbbBuffer = basicFeatureXe3pLpm->GetVdenc2ndLevelBatchBuffer(m_pipeline->m_currRecycledBufIdx);
         ENCODE_CHK_NULL_RETURN(slbbBuffer);
         slbbBuffer->dwOffset = m_basicFeature->m_vdencBatchBufferTileSliceStart[currSlcIdx];
-        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, slbbBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_START)(&cmdBuffer, slbbBuffer));
+        }
 
         SETPAR_AND_ADDCMD(VDENC_WALKER_STATE, m_vdencItf, &cmdBuffer);
     }

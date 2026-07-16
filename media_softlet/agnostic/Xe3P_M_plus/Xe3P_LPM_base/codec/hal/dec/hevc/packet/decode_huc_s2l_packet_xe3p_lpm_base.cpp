@@ -151,19 +151,31 @@ namespace decode {
     
         DECODE_CHK_NULL(m_hucItf);
 
-        MEDIA_CHK_STATUS_RETURN(NullHW::StartPredicateNext(m_osInterface, m_miItf, &cmdBuffer));
         if (prologNeeded)
         {
             DECODE_CHK_STATUS(AddForceWakeup(cmdBuffer, false, true));
             DECODE_CHK_STATUS(SendPrologCmds(cmdBuffer));
         }
 
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_hevcPipeline->GetBypassHWLegacy())
+        {
+            DECODE_CHK_STATUS(m_hevcPipeline->GetBypassHWLegacy()->StartPredicate(&cmdBuffer));
+        }
+#endif
+
         DECODE_CHK_STATUS(PackPictureLevelCmds(cmdBuffer));
         DECODE_CHK_STATUS(PackSliceLevelCmds(cmdBuffer));
         DECODE_CHK_STATUS(VdPipelineFlush(cmdBuffer));
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_hevcPipeline->GetBypassHWLegacy())
+        {
+            DECODE_CHK_STATUS(m_hevcPipeline->GetBypassHWLegacy()->StopPredicate(&cmdBuffer));
+        }
+#endif
         // Flush the engine to ensure memory written out
         DECODE_CHK_STATUS(MemoryFlush(cmdBuffer));
-        MEDIA_CHK_STATUS_RETURN(NullHW::StopPredicateNext(m_osInterface, m_miItf, &cmdBuffer));
+
         MOS_RESOURCE* osResource = nullptr;
         uint32_t     offset = 0;
 
@@ -171,8 +183,11 @@ namespace decode {
 
          // Check HuC_STATUS2 bit6, if bit6 > 0 HW continue execution following cmd, otherwise it send a COND BB END cmd.
         uint32_t compareOperation = mhw::mi::COMPARE_OPERATION_MADGREATERTHANIDD;
-        DECODE_CHK_STATUS(m_hwInterface->SendCondBbEndCmd(
-            osResource, offset, 0, false, false, compareOperation, &cmdBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            DECODE_CHK_STATUS(m_hwInterface->SendCondBbEndCmd(
+                osResource, offset, 0, false, false, compareOperation, &cmdBuffer));
+        }
 
         DECODE_CHK_STATUS(StoreHucStatusRegister(cmdBuffer));
 
@@ -382,7 +397,10 @@ namespace decode {
         auto &mfxWaitParams               = m_miItf->MHW_GETPAR_F(MFX_WAIT)();
         mfxWaitParams                     = {};
         mfxWaitParams.iStallVdboxPipeline = true;
-        DECODE_CHK_STATUS((m_miItf->MHW_ADDCMD_F(MFX_WAIT)(&cmdBuffer)));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            DECODE_CHK_STATUS((m_miItf->MHW_ADDCMD_F(MFX_WAIT)(&cmdBuffer)));
+        }
 
         return MOS_STATUS_SUCCESS;
     }

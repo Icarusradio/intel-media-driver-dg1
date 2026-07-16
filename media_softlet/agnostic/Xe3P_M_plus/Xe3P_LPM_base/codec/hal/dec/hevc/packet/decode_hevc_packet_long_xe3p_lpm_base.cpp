@@ -56,6 +56,13 @@ MOS_STATUS HevcDecodeLongPktXe3P_Lpm_Base::Init()
     m_aqmPkt  = dynamic_cast<HevcDecodeAqmPktXe3PLpmBase *>(subPacket);
 #endif
 
+#if (_DEBUG || _RELEASE_INTERNAL)
+    if (m_hevcPipeline->GetBypassHWLegacy())
+    {
+        m_bypassHwLegacyEnabled = true;
+    }
+#endif
+
     return MOS_STATUS_SUCCESS;
 }
 
@@ -91,8 +98,11 @@ MOS_STATUS HevcDecodeLongPktXe3P_Lpm_Base::Submit(
 
         // Check HuC_STATUS bit15, HW continue if bit15 > 0, otherwise send COND BB END cmd.
         uint32_t compareOperation = mhw::mi::COMPARE_OPERATION_MADGREATERTHANIDD;
-        DECODE_CHK_STATUS(m_hwInterface->SendCondBbEndCmd(
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            DECODE_CHK_STATUS(m_hwInterface->SendCondBbEndCmd(
                 osResource, offset, 0, false, false, compareOperation, cmdBuffer));
+        }
     }
 
     DECODE_CHK_NULL(m_hwInterface->GetVdencInterfaceNext());
@@ -173,7 +183,10 @@ MOS_STATUS HevcDecodeLongPktXe3P_Lpm_Base::PackPictureLevelCmds(MOS_COMMAND_BUFF
     PMHW_BATCH_BUFFER batchBuffer = m_hevcPipeline->GetSliceLvlCmdBuffer();
     DECODE_CHK_NULL(batchBuffer);
     batchBuffer->dwOffset = 0;
-    DECODE_CHK_STATUS(m_miItf->ADDCMD_MI_BATCH_BUFFER_START(&cmdBuffer, batchBuffer));
+    if (!m_osInterface->bNullHwIsEnabled)
+    {
+        DECODE_CHK_STATUS(m_miItf->ADDCMD_MI_BATCH_BUFFER_START(&cmdBuffer, batchBuffer));
+    }
 
     DECODE_CHK_STATUS(VdMemoryFlush(cmdBuffer));
     DECODE_CHK_STATUS(VdPipelineFlush(cmdBuffer));

@@ -126,7 +126,15 @@ MOS_STATUS HevcPipeline::Execute()
             }
             else
             {
-                DECODE_CHK_STATUS(m_mediaContext->SwitchContext(VdboxDecodeFunc, *scalabOption, &m_scalability));
+                if (GetBypassHWLegacy())
+                {
+                    MediaFunction decFunc = (m_bypassHWLegacyGpuNode == MOS_GPU_NODE_VE) ? VeboxVppFunc : VdboxDecodeFunc;
+                    DECODE_CHK_STATUS(m_mediaContext->SwitchContext(decFunc, *scalabOption, &m_scalability));
+                }
+                else
+                {
+                    DECODE_CHK_STATUS(m_mediaContext->SwitchContext(VdboxDecodeFunc, *scalabOption, &m_scalability));
+                }
             }
             if (scalabOption->IsScalabilityOptionMatched(m_scalabOption))
             {

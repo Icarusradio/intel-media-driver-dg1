@@ -200,6 +200,27 @@ void OsContextNext::ReleaseDummyVdSlot(int32_t slotIndex, bool isScalable)
         if (m_slotRefCount[slotIndex] > 0)
             m_slotRefCount[slotIndex]--;
     }
+
+    // If this release drains the whole pool back to idle, restore both
+    // codecs' search origins immediately. Without this, a transient claim
+    // (e.g. a capability-query pipeline that claims then immediately
+    // releases a slot) leaves startSlotCounter permanently advanced --
+    // ReleaseDummyVdSlot used to rewind only the per-slot refcounts, never
+    // the counter -- drifting later real claims off the intended engine.
+    bool allReleased = true;
+    for (uint32_t i = 0; i < m_dummyVdboxCount; i++)
+    {
+        if (m_slotRefCount[i] != 0)
+        {
+            allReleased = false;
+            break;
+        }
+    }
+    if (allReleased)
+    {
+        m_startSlotCounterEncode = 0;
+        m_startSlotCounterDecode = DUMMY_VDBOX_NUM_MAX - 1;
+    }
 }
 
 #endif // (_DEBUG || _RELEASE_INTERNAL)

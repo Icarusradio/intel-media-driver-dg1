@@ -41,13 +41,10 @@
 #include "encodecp.h"
 #include "encode_packet_utilities.h"
 #include "encode_scalability_defs.h"
+#include "bypass_hw_legacy.h"
 
 #define CONSTRUCTPACKETID(_componentId, _subComponentId, _packetId) \
     (_componentId << 24 | _subComponentId << 16 | _packetId)
-
-#if (_DEBUG || _RELEASE_INTERNAL)
-class BypassHwLegacy;
-#endif
 
 namespace encode
 {
@@ -329,6 +326,8 @@ public:
     MOS_STATUS ReportErrorFlag(PMOS_RESOURCE pMetadataBuffer,
         uint32_t size, uint32_t offset, uint32_t flag);
 
+    BypassHwLegacy *GetBypassHWLegacy() const { return m_bypassHWLegacy; }
+
 #define CODECHAL_ENCODE_RECYCLED_BUFFER_NUM 6
 #define VDENC_BRC_NUM_OF_PASSES 2
 
@@ -346,7 +345,8 @@ protected:
     EncodeMemComp *      m_mmcState    = nullptr;
     EncodeCp *           m_encodecp    = nullptr;
     PacketUtilities *    m_packetUtilities = nullptr;
-
+    BypassHwLegacy *     m_bypassHWLegacy = nullptr;
+    MOS_GPU_NODE         m_bypassHWLegacyGpuNode = MOS_GPU_NODE_VIDEO;
     CodechalDebugInterface *m_statusReportDebugInterface = nullptr;  //!< Interface used for debug dumps in status report callback function
 
     uint8_t m_numVdbox = 0;

@@ -133,6 +133,19 @@ MOS_STATUS EncodePipeline::Initialize(void *settings)
         "FtrWithSlimVdbox=1 but EncodePipeline pref != FULL "
         "(VDENC HW is Type-A only)");
 
+    if (m_osInterface->bNullHwIsEnabled)
+    {
+        m_bypassHWLegacy = MOS_New(BypassHwLegacy);
+        ENCODE_CHK_NULL_RETURN(m_bypassHWLegacy);
+
+        MOS_STATUS status = m_bypassHWLegacy->Initialize(m_osInterface, m_hwInterface->GetMiInterfaceNext());
+        if (status != MOS_STATUS_SUCCESS)
+        {
+            MOS_Delete(m_bypassHWLegacy);
+            m_bypassHWLegacy = nullptr;
+        }
+    }
+
     return MOS_STATUS_SUCCESS;
 }
 
@@ -169,6 +182,12 @@ MOS_STATUS EncodePipeline::Uninitialize()
     }
 
     MOS_Delete(m_packetUtilities);
+
+    if (m_bypassHWLegacy != nullptr)
+    {
+        m_bypassHWLegacy->Destroy();
+        MOS_Delete(m_bypassHWLegacy);
+    }
 
     return MOS_STATUS_SUCCESS;
 }

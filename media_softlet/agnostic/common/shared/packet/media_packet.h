@@ -360,8 +360,6 @@ protected:
     //! Set to true when BypassHwLegacy is fully initialized and active. Controls two behaviors:
     //! (1) Disables NullHW::StartPredicateNext/StopPredicateNext so BypassHwLegacy is the
     //!     sole owner of MI_SET_PREDICATE in the command buffer.
-    //! (2) Skips HuC-dependent commands (HuC status checks, BRC batch buffer jumps) that
-    //!     would fail or cause GPU hangs because HuC never runs in NullHW mode.
     bool                          m_bypassHwLegacyEnabled = false;
 #endif
 

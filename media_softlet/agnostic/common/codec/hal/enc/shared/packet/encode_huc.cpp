@@ -50,6 +50,13 @@ namespace encode
         HUC_CHK_NULL_RETURN(m_hucItf);
         m_hucStatus2ImemLoadedMask = m_hucItf->GetHucStatus2ImemLoadedMask();
 
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_pipeline->GetBypassHWLegacy())
+        {
+            m_bypassHwLegacyEnabled = true;
+        }
+#endif
+
         return MOS_STATUS_SUCCESS;
     }
 
@@ -207,14 +214,20 @@ namespace encode
         auto &mfxWaitParams                 = m_miItf->MHW_GETPAR_F(MFX_WAIT)();
         mfxWaitParams                       = {};
         mfxWaitParams.iStallVdboxPipeline   = true;
-        MHW_MI_CHK_STATUS(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(cmdBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            MHW_MI_CHK_STATUS(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(cmdBuffer));
+        }
 
         SETPAR_AND_ADDCMD(HUC_PIPE_MODE_SELECT, m_hucItf, cmdBuffer);
 
         //for gen 11, we need to add MFX wait for both KIN and VRT before and after HUC Pipemode select...
         mfxWaitParams                       = {};
         mfxWaitParams.iStallVdboxPipeline   = true;
-        MHW_MI_CHK_STATUS(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(cmdBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            MHW_MI_CHK_STATUS(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(cmdBuffer));
+        }
 
         return MOS_STATUS_SUCCESS;
     }
@@ -228,7 +241,10 @@ namespace encode
         auto &mfxWaitParams                 = m_miItf->MHW_GETPAR_F(MFX_WAIT)();
         mfxWaitParams                       = {};
         mfxWaitParams.iStallVdboxPipeline   = true;
-        MHW_MI_CHK_STATUS(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(cmdBuffer));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            MHW_MI_CHK_STATUS(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(cmdBuffer));
+        }
 
         return MOS_STATUS_SUCCESS;
     }

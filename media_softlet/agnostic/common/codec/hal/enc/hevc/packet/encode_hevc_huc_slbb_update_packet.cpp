@@ -353,13 +353,19 @@ namespace encode
         auto &mfxWaitParams                 = m_miItf->MHW_GETPAR_F(MFX_WAIT)();
         mfxWaitParams                       = {};
         mfxWaitParams.iStallVdboxPipeline   = true;
-        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(&constructedCmdBuf));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(&constructedCmdBuf));
+        }
 
         SETPAR_AND_ADDCMD(HCP_PIPE_MODE_SELECT, m_hcpItf, &constructedCmdBuf);
 
         mfxWaitParams                       = {};
         mfxWaitParams.iStallVdboxPipeline   = true;
-        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(&constructedCmdBuf));
+        if (!m_osInterface->bNullHwIsEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MFX_WAIT)(&constructedCmdBuf));
+        }
 
         MHW_BATCH_BUFFER TempBatchBuffer = {};
         TempBatchBuffer.iSize       = MOS_ALIGN_CEIL(m_hwInterface->m_vdencReadBatchBufferSize, CODECHAL_PAGE_SIZE);

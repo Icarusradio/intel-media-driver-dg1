@@ -144,6 +144,28 @@ public:
     //!
     MOS_STATUS Destroy();
 
+    //!
+    //! \brief  Get the flag whether pipeline characteristics is set
+    //! \return bool
+    //!
+    bool IsPipelineCharacteristicsSet();
+
+    //!
+    //! \brief  Set the flag for pipeline characteristics
+    //!
+    void SetPipelineCharacteristicsFlag();
+
+    //!
+    //! \brief  Get the flag whether dummy GPUNode is fetched
+    //! \return bool
+    //!
+    bool IsDummyVdNodeFetch();
+
+    //!
+    //! \brief  Set the flag for dummy GPUNode fetch
+    //!
+    void SetDummyVdNodeFetchFlag();
+
 #if (_DEBUG || _RELEASE_INTERNAL)
     //! \brief  Get repeat count (debug accessor for ULT)
     uint32_t GetRepeatCount() const { return m_repeatCount; }
@@ -203,6 +225,8 @@ private:
     bool                m_readRepeatCount  = false;
     uint32_t            m_repeatCount      = 0;
     bool                m_destroyed        = false;
+    bool                m_isParamSet       = false;
+    bool                m_isGPUNodeFetch   = false;
 
     PMOS_INTERFACE      m_osInterface  = nullptr;
     std::shared_ptr<mhw::mi::Itf> m_miItf = nullptr;

@@ -219,6 +219,11 @@ MOS_STATUS BypassHwLegacy::AddNullHwProxyCmd(PMOS_COMMAND_BUFFER cmdBuffer, bool
                 MediaUserSetting::Group::Device);
         }
 
+        if (m_isScalable && m_repeatCount > 1)
+        {
+            m_repeatCount /= 2;
+        }
+
         m_readRepeatCount = true;
     }
 
@@ -396,7 +401,6 @@ const RepeatCountEntry *BypassHwLegacy::FindEntry(
     return nullptr;
 }
 
-
 void BypassHwLegacy::LoadProxyConfigFile()
 {
     if (s_configFileLoaded || !m_osInterface)
@@ -541,3 +545,22 @@ bool BypassHwLegacy::LookupScalabilityFromConfig(
     return entry ? entry->scalability == 1 : false;
 }
 
+bool BypassHwLegacy::IsPipelineCharacteristicsSet()
+{
+    return m_isParamSet;
+}
+
+void BypassHwLegacy::SetPipelineCharacteristicsFlag()
+{
+    m_isParamSet = true;
+}
+
+bool BypassHwLegacy::IsDummyVdNodeFetch()
+{
+    return m_isGPUNodeFetch;
+}
+
+void BypassHwLegacy::SetDummyVdNodeFetchFlag()
+{
+    m_isGPUNodeFetch = true;
+}

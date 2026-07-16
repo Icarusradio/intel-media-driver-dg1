@@ -77,7 +77,7 @@ MOS_STATUS HevcPipelineXe3P_Lpm_Base::Init(void *settings)
     DECODE_CHK_STATUS(RegisterPacket(DecodePacketId(this, hevcRealTilePacketId), hevcDecodePktRealTile));
     DECODE_CHK_STATUS(hevcDecodePktRealTile->Init());
 
-    if (m_numVdbox == 2)
+    if (m_numVdbox == 2 && !m_osInterface->bNullHwIsEnabled)
     {
         m_allowVirtualNodeReassign = true;
     }

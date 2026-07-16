@@ -216,6 +216,40 @@ MOS_STATUS DecodePipeline::Initialize(void *settings)
     mhw::HwcmdParser::InitInstance(m_osInterface, mhw::HwcmdParser::AddOnMode::NoAddOn);
 #endif
 
+    if (m_osInterface->bNullHwIsEnabled)
+    {
+        m_bypassHWLegacy = MOS_New(BypassHwLegacy);
+        DECODE_CHK_NULL(m_bypassHWLegacy);
+
+        MOS_STATUS status = m_bypassHWLegacy->Initialize(m_osInterface, m_hwInterface->GetMiInterfaceNext());
+        if (status == MOS_STATUS_SUCCESS)
+        {
+            uint32_t bitDepth = (codecSettings->lumaChromaDepth & CODECHAL_LUMA_CHROMA_DEPTH_12_BITS) ? 12 : ((codecSettings->lumaChromaDepth & CODECHAL_LUMA_CHROMA_DEPTH_10_BITS) ? 10 : 8);
+
+            DECODE_CHK_STATUS(m_bypassHWLegacy->FetchDummyVdNode(
+                m_bypassHWLegacyGpuNode,
+                static_cast<CODECHAL_STANDARD>(codecSettings->standard),
+                false,
+                codecSettings->width,
+                codecSettings->height,
+                static_cast<uint8_t>(codecSettings->chromaFormat),
+                static_cast<uint8_t>(bitDepth),
+                0));
+            m_bypassHWLegacy->SetPipelineCharacteristics(
+                static_cast<CODECHAL_STANDARD>(codecSettings->standard),
+                static_cast<uint8_t>(codecSettings->chromaFormat),
+                codecSettings->width,
+                codecSettings->height,
+                static_cast<uint8_t>(bitDepth),
+                0);
+        }
+        else
+        {
+            MOS_Delete(m_bypassHWLegacy);
+            m_bypassHWLegacy = nullptr;
+        }
+    }
+
     return MOS_STATUS_SUCCESS;
 }
 
@@ -256,6 +290,12 @@ MOS_STATUS DecodePipeline::Uninitialize()
     MOS_Delete(m_allocator);
 
     CODECHAL_DEBUG_TOOL(MOS_Delete(m_debugInterface););
+
+    if (m_bypassHWLegacy != nullptr)
+    {
+        m_bypassHWLegacy->Destroy();
+        MOS_Delete(m_bypassHWLegacy);
+    }
 
     return MOS_STATUS_SUCCESS;
 }

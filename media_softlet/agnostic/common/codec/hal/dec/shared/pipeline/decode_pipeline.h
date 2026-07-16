@@ -42,6 +42,7 @@
 #include "decode_mem_compression.h"
 #include "decode_downsampling_feature.h"
 #include "codechal_oca_debug.h"
+#include "bypass_hw_legacy.h"
 
 namespace decode {
 
@@ -352,6 +353,8 @@ public:
     }
 #endif
 
+    BypassHwLegacy *GetBypassHWLegacy() const { return m_bypassHWLegacy; }
+
 protected:
     //!
     //! \brief  Initialize the decode pipeline
@@ -586,6 +589,8 @@ protected:
 #endif
 
     PMOS_SURFACE            m_tempOutputSurf = nullptr;
+    BypassHwLegacy *        m_bypassHWLegacy        = nullptr;
+    MOS_GPU_NODE            m_bypassHWLegacyGpuNode = MOS_GPU_NODE_VIDEO;
 
 MEDIA_CLASS_DEFINE_END(decode__DecodePipeline)
 };
