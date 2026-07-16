@@ -901,10 +901,13 @@ VAStatus DdiVpFunctions::DdiInitCtx(
         return VA_STATUS_ERROR_ALLOCATION_FAILED;
     }
 
-    // initialize vphal render params
+    // initialize vphal render params.
+    // Allocate via the vphal hook so the ext pipeline gets VPHAL_SURFACE_EXT (its ext
+    // feature handlers - SR3/LACE/ACE - read ext-only fields), while base pipelines get
+    // the base VPHAL_SURFACE. Freed with MOS_Delete in FreeVpHalRenderParams either way.
     for (int32_t surfIndex = 0; surfIndex < VPHAL_MAX_SOURCES; surfIndex++)
     {
-        vpHalRenderParams->pSrc[surfIndex] = MOS_New(VPHAL_SURFACE);
+        vpHalRenderParams->pSrc[surfIndex] = vpCtx->pVpHal->AllocateVphalSurface();
         if( nullptr == vpHalRenderParams->pSrc[surfIndex])
         {
             FreeVpHalRenderParams(vpCtx, vpHalRenderParams);
@@ -914,7 +917,7 @@ VAStatus DdiVpFunctions::DdiInitCtx(
 
     for (int32_t surfIndex = 0; surfIndex < VPHAL_MAX_TARGETS; surfIndex++)
     {
-        vpHalRenderParams->pTarget[surfIndex] = MOS_New(VPHAL_SURFACE);
+        vpHalRenderParams->pTarget[surfIndex] = vpCtx->pVpHal->AllocateVphalSurface();
         if( nullptr == vpHalRenderParams->pTarget[surfIndex])
         {
             FreeVpHalRenderParams(vpCtx, vpHalRenderParams);

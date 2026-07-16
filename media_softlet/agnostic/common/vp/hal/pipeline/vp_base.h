@@ -189,6 +189,21 @@ public:
         return false;
     }
 
+    //!
+    //! \brief    Allocate a render-param surface (pSrc[]/pTarget[]).
+    //! \details  The ext pipeline overrides this to allocate the larger
+    //!           VPHAL_SURFACE_EXT so ext feature handlers (SR3/LACE/ACE) can safely
+    //!           access ext-only fields. Base pipelines allocate the base struct.
+    //!           Defined inline so ULT/stub link closures that do not link
+    //!           vp_base.cpp still resolve it.
+    //! \return   PVPHAL_SURFACE
+    //!           Allocated surface, or nullptr on failure.
+    //!
+    virtual PVPHAL_SURFACE AllocateVphalSurface()
+    {
+        return MOS_New(VPHAL_SURFACE);
+    }
+
 protected:
     virtual bool IsApoEnabled()
     {
