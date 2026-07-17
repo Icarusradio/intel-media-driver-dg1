@@ -58,7 +58,7 @@ namespace decode
         DECODE_CHK_STATUS(RegisterPacket(DecodePacketId(this, av1DecodePacketId), m_av1DecodePkt));
         DECODE_CHK_STATUS(m_av1DecodePkt->Init());
 
-        if (m_numVdbox == 2)
+        if (m_numVdbox == 2 && !m_osInterface->bNullHwIsEnabled)
         {
             m_allowVirtualNodeReassign = true;
         }
@@ -88,7 +88,15 @@ namespace decode
         }
         else
         {
-            DECODE_CHK_STATUS(m_mediaContext->SwitchContext(VdboxDecodeFunc, &scalPars, &m_scalability));
+            if (GetBypassHWLegacy())
+            {
+                MediaFunction decFunc = (m_bypassHWLegacyGpuNode == MOS_GPU_NODE_VE) ? VeboxVppFunc : VdboxDecodeFunc;
+                DECODE_CHK_STATUS(m_mediaContext->SwitchContext(decFunc, &scalPars, &m_scalability));
+            }
+            else
+            {
+                DECODE_CHK_STATUS(m_mediaContext->SwitchContext(VdboxDecodeFunc, &scalPars, &m_scalability));
+            }
         }
         DECODE_CHK_NULL(m_scalability);
 

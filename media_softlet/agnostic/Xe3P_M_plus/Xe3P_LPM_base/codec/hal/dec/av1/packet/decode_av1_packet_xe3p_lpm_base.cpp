@@ -50,7 +50,12 @@ namespace decode
             return MOS_STATUS_NULL_POINTER;
         }
 #endif
-
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_av1Pipeline->GetBypassHWLegacy())
+        {
+            m_bypassHwLegacyEnabled = true;
+        }
+#endif
         return MOS_STATUS_SUCCESS;
     }
 
@@ -166,7 +171,10 @@ namespace decode
                 }
             }
 
-            DECODE_CHK_STATUS(m_miItf->ADDCMD_MI_BATCH_BUFFER_START(&cmdBuffer, m_batchBuf));
+            if (!m_osInterface->bNullHwIsEnabled)
+            {
+                DECODE_CHK_STATUS(m_miItf->ADDCMD_MI_BATCH_BUFFER_START(&cmdBuffer, m_batchBuf));
+            }
         }
         else
         {

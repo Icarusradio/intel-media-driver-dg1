@@ -215,6 +215,13 @@ namespace encode{
 
         m_usePatchList = m_osInterface->bUsesPatchList;
 
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_pipeline->GetBypassHWLegacy())
+        {
+            m_bypassHwLegacyEnabled = true;
+        }
+#endif
+
         return MOS_STATUS_SUCCESS;
     }
 
@@ -280,7 +287,14 @@ namespace encode{
         miConditionalBatchBufferEndParams.presSemaphoreBuffer =
             m_basicFeature->m_recycleBuf->GetBuffer(VdencBrcPakMmioBuffer, 0);
 
-        ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_CONDITIONAL_BATCH_BUFFER_END)(&cmdBuffer));
+        if (m_osInterface->bNullHwIsEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_BATCH_BUFFER_END)(&cmdBuffer));
+        }
+        else
+        {
+            ENCODE_CHK_STATUS_RETURN(m_miItf->MHW_ADDCMD_F(MI_CONDITIONAL_BATCH_BUFFER_END)(&cmdBuffer));
+        }
 
         return MOS_STATUS_SUCCESS;
     }
@@ -365,6 +379,25 @@ namespace encode{
             ENCODE_CHK_STATUS_RETURN(perfProfiler->AddPerfCollectStartCmd(
                 (void *)m_pipeline, m_osInterface, m_miItf, &cmdBuffer));
         }
+
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_bypassHwLegacyEnabled)
+        {
+            if (!m_pipeline->GetBypassHWLegacy()->IsPipelineCharacteristicsSet())
+            {
+                m_pipeline->GetBypassHWLegacy()->SetPipelineCharacteristics(
+                    CODECHAL_AV1,
+                    m_basicFeature->m_chromaFormat,
+                    m_basicFeature->m_oriFrameWidth,
+                    m_basicFeature->m_oriFrameHeight,
+                    m_basicFeature->m_bitDepth,
+                    m_basicFeature->m_av1SeqParams->TargetUsage);
+                m_pipeline->GetBypassHWLegacy()->SetPipelineCharacteristicsFlag();
+            }
+            ENCODE_CHK_STATUS_RETURN(m_pipeline->GetBypassHWLegacy()->AddNullHwProxyCmd(&cmdBuffer, true));
+            ENCODE_CHK_STATUS_RETURN(m_pipeline->GetBypassHWLegacy()->StartPredicate(&cmdBuffer));
+        }
+#endif
 
         ENCODE_CHK_STATUS_RETURN(AddPictureVdencCommands(cmdBuffer));
 
@@ -456,6 +489,13 @@ namespace encode{
         auto scalability = m_pipeline->GetMediaScalability();
         ENCODE_CHK_NULL_RETURN(scalability);
         ENCODE_CHK_STATUS_RETURN(scalability->SyncPipe(syncOnePipeWaitOthers, 0, &cmdBuffer));
+
+#if (_DEBUG || _RELEASE_INTERNAL)
+        if (m_bypassHwLegacyEnabled)
+        {
+            ENCODE_CHK_STATUS_RETURN(m_pipeline->GetBypassHWLegacy()->StopPredicate(&cmdBuffer));
+        }
+#endif
 
         if (m_pipeline->IsFirstPipe())
         {

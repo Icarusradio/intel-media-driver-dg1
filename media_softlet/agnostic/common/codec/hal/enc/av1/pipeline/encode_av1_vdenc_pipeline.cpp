@@ -293,7 +293,30 @@ MOS_STATUS Av1VdencPipeline::SwitchContext(uint8_t outputChromaFormat, uint16_t 
 
     m_scalPars->vdboxTypePref = m_pipelineVdboxTypePref;
 
-    m_mediaContext->SwitchContext(VdboxEncodeFunc, &*m_scalPars, &m_scalability);
+    if (GetBypassHWLegacy())
+    {
+        if (!GetBypassHWLegacy()->IsDummyVdNodeFetch())
+        {
+            auto basicFeature = dynamic_cast<Av1BasicFeature *>(m_featureManager->GetFeature(FeatureIDs::basicFeature));
+            ENCODE_CHK_NULL_RETURN(basicFeature);
+            ENCODE_CHK_STATUS_RETURN(m_bypassHWLegacy->FetchDummyVdNode(
+                m_bypassHWLegacyGpuNode,
+                CODECHAL_AV1,
+                true,
+                basicFeature->m_oriFrameWidth,
+                basicFeature->m_oriFrameHeight,
+                basicFeature->m_chromaFormat,
+                basicFeature->m_bitDepth,
+                basicFeature->m_av1SeqParams->TargetUsage));
+            GetBypassHWLegacy()->SetDummyVdNodeFetchFlag();
+        }
+        MediaFunction encFunc = (m_bypassHWLegacyGpuNode == MOS_GPU_NODE_VE) ? VeboxVppFunc : VdboxEncodeFunc;
+        ENCODE_CHK_STATUS_RETURN(m_mediaContext->SwitchContext(encFunc, &*m_scalPars, &m_scalability));
+    }
+    else
+    {
+        ENCODE_CHK_STATUS_RETURN(m_mediaContext->SwitchContext(VdboxEncodeFunc, &*m_scalPars, &m_scalability));
+    }
     ENCODE_CHK_NULL_RETURN(m_scalability);
 
     m_scalability->SetPassNumber(m_featureManager->GetNumPass());

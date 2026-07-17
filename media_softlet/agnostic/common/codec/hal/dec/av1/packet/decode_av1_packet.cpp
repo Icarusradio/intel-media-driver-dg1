@@ -325,6 +325,13 @@ MOS_STATUS Av1DecodePkt::StartStatusReport(uint32_t srType, MOS_COMMAND_BUFFER* 
         StoreEngineId(cmdBuffer, decode::DecodeStatusReportType::CsEngineIdOffset_0);
     }
 #endif
+#if (_DEBUG || _RELEASE_INTERNAL)
+    if (m_bypassHwLegacyEnabled)
+    {
+        DECODE_CHK_STATUS(m_av1Pipeline->GetBypassHWLegacy()->AddNullHwProxyCmd(cmdBuffer, false));
+        DECODE_CHK_STATUS(m_av1Pipeline->GetBypassHWLegacy()->StartPredicate(cmdBuffer));
+    }
+#endif
     return MOS_STATUS_SUCCESS;
 }
 
@@ -333,6 +340,12 @@ MOS_STATUS Av1DecodePkt::EndStatusReport(uint32_t srType, MOS_COMMAND_BUFFER* cm
     DECODE_FUNC_CALL();
 
     DECODE_CHK_NULL(cmdBuffer);
+#if (_DEBUG || _RELEASE_INTERNAL)
+    if (m_bypassHwLegacyEnabled)
+    {
+        DECODE_CHK_STATUS(m_av1Pipeline->GetBypassHWLegacy()->StopPredicate(cmdBuffer));
+    }
+#endif
     DECODE_CHK_STATUS(ReadAvpStatus( m_statusReport, *cmdBuffer));
     DECODE_CHK_STATUS(MediaPacket::EndStatusReportNext(srType, cmdBuffer));
 
