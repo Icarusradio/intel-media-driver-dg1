@@ -125,7 +125,8 @@ namespace encode
         MOS_RESOURCE                m_vdencRecNotFilteredBuffer = {};
 
         bool                        m_enableLBCOnly = false;               //!< Enable LBC only for IBC
-        bool                        m_enableSCC = false;                   //!< Flag to indicate if HEVC SCC is enabled.
+        bool                        m_sccEnabledInSeq = false;             //!< Sequence-level SCC enable.
+        bool                        m_enableSCC = false;                   //!< Per-frame flag to indicate if HEVC SCC is enabled.
         unsigned char               m_slotForRecNotFiltered = 0;           //!< Slot for not filtered reconstructed surface
 
         EncodeBasicFeature          *m_basicFeature = nullptr;             //!< EncodeBasicFeature
